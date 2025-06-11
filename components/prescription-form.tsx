@@ -1,0 +1,254 @@
+'use client';
+
+import { useState } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form';
+import { Prescription, Medication } from '@/lib/types';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Plus, Trash2 } from 'lucide-react';
+import { usePatients } from '@/hooks/use-patients';
+import { useUsers } from '@/hooks/use-users';
+import { useAuth } from '@/contexts/auth-context';
+
+interface PrescriptionFormProps {
+  prescription?: Prescription;
+  onSubmit: (data: Omit<Prescription, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onCancel: () => void;
+}
+
+export function PrescriptionForm({ prescription, onSubmit, onCancel }: PrescriptionFormProps) {
+  const [loading, setLoading] = useState(false);
+  const { patients } = usePatients();
+  const { getDoctors } = useUsers();
+  const { user } = useAuth();
+  const doctors = getDoctors();
+  
+  const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm({
+    defaultValues: prescription ? {
+      patientId: prescription.patientId,
+      doctorId: prescription.doctorId,
+      diagnosis: prescription.diagnosis,
+      instructions: prescription.instructions,
+      status: prescription.status,
+      medications: prescription.medications,
+    } : {
+      doctorId: user?.role === 'doctor' ? user.id : '',
+      status: 'active',
+      medications: [{ id: crypto.randomUUID(), name: '', dosage: '', frequency: '', duration: '', instructions: '' }],
+    }
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'medications'
+  });
+
+  const selectedPatientId = watch('patientId');
+  const selectedDoctorId = watch('doctorId');
+  const selectedPatient = patients.find(p => p.id === selectedPatientId);
+  const selectedDoctor = doctors.find(d => d.id === selectedDoctorId);
+
+  const handleFormSubmit = async (data: any) => {
+    setLoading(true);
+    try {
+      const patientName = selectedPatient ? `${selectedPatient.firstName} ${selectedPatient.lastName}` : '';
+      const doctorName = selectedDoctor ? `${selectedDoctor.firstName} ${selectedDoctor.lastName}` : '';
+      await onSubmit({
+        ...data,
+        patientName,
+        doctorName,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addMedication = () => {
+    append({ id: crypto.randomUUID(), name: '', dosage: '', frequency: '', duration: '', instructions: '' });
+  };
+
+  return (
+    <Card className="max-w-4xl mx-auto">
+      <CardHeader>
+        <CardTitle>
+          {prescription ? 'Editar Prescripción' : 'Nueva Prescripción'}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="patientId">Paciente</Label>
+              <Select onValueChange={(value) => setValue('patientId', value)} defaultValue={prescription?.patientId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar paciente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {patients.map((patient) => (
+                    <SelectItem key={patient.id} value={patient.id}>
+                      {patient.firstName} {patient.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.patientId && (
+                <p className="text-sm text-red-600 mt-1">Debe seleccionar un paciente</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="doctorId">Doctor</Label>
+              <Select 
+                onValueChange={(value) => setValue('doctorId', value)} 
+                defaultValue={prescription?.doctorId || (user?.role === 'doctor' ? user.id : '')}
+                disabled={user?.role === 'doctor'}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar doctor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {doctors.map((doctor) => (
+                    <SelectItem key={doctor.id} value={doctor.id}>
+                      {doctor.firstName} {doctor.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.doctorId && (
+                <p className="text-sm text-red-600 mt-1">Debe seleccionar un doctor</p>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="diagnosis">Diagnóstico</Label>
+            <Input
+              id="diagnosis"
+              {...register('diagnosis', { required: 'El diagnóstico es requerido' })}
+              placeholder="Diagnóstico del paciente"
+            />
+            {errors.diagnosis && (
+              <p className="text-sm text-red-600 mt-1">{errors.diagnosis.message}</p>
+            )}
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <Label>Medicamentos</Label>
+              <Button type="button" onClick={addMedication} variant="outline" size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Agregar Medicamento
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              {fields.map((field, index) => (
+                <Card key={field.id} className="p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-medium">Medicamento {index + 1}</h4>
+                    {fields.length > 1 && (
+                      <Button
+                        type="button"
+                        onClick={() => remove(index)}
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor={`medications.${index}.name`}>Nombre del Medicamento</Label>
+                      <Input
+                        {...register(`medications.${index}.name`, { required: 'El nombre es requerido' })}
+                        placeholder="Nombre del medicamento"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor={`medications.${index}.dosage`}>Dosis</Label>
+                      <Input
+                        {...register(`medications.${index}.dosage`, { required: 'La dosis es requerida' })}
+                        placeholder="ej: 500mg"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor={`medications.${index}.frequency`}>Frecuencia</Label>
+                      <Input
+                        {...register(`medications.${index}.frequency`, { required: 'La frecuencia es requerida' })}
+                        placeholder="ej: Cada 8 horas"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor={`medications.${index}.duration`}>Duración</Label>
+                      <Input
+                        {...register(`medications.${index}.duration`, { required: 'La duración es requerida' })}
+                        placeholder="ej: 7 días"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <Label htmlFor={`medications.${index}.instructions`}>Instrucciones Especiales</Label>
+                    <Textarea
+                      {...register(`medications.${index}.instructions`)}
+                      placeholder="Instrucciones adicionales para este medicamento..."
+                      rows={2}
+                    />
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="instructions">Instrucciones Generales</Label>
+            <Textarea
+              id="instructions"
+              {...register('instructions', { required: 'Las instrucciones son requeridas' })}
+              placeholder="Instrucciones generales para el paciente..."
+              rows={4}
+            />
+            {errors.instructions && (
+              <p className="text-sm text-red-600 mt-1">{errors.instructions.message}</p>
+            )}
+          </div>
+
+          {prescription && (
+            <div>
+              <Label htmlFor="status">Estado</Label>
+              <Select onValueChange={(value) => setValue('status', value)} defaultValue={prescription.status}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Estado de la prescripción" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Activa</SelectItem>
+                  <SelectItem value="completed">Completada</SelectItem>
+                  <SelectItem value="cancelled">Cancelada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          <div className="flex gap-4 pt-4">
+            <Button type="submit" disabled={loading} className="flex-1">
+              {loading ? 'Guardando...' : (prescription ? 'Actualizar' : 'Crear')} Prescripción
+            </Button>
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancelar
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
