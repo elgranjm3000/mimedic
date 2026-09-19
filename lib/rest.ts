@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { InValue } from '@libsql/client';
 import { db, ensureDb } from './db';
+import { audit } from './audit';
 
 export interface EntityConfig {
   table: string;
@@ -46,6 +47,39 @@ export async function requireRequester(request: Request): Promise<Requester | Ne
 
 export function isNextResponse(value: unknown): value is NextResponse {
   return value instanceof NextResponse;
+}
+
+/** Log de auditoría de una operación sobre una entidad. Best-effort. */
+async function logOp(
+  requester: Requester,
+  request: Request,
+  action: string,
+  config: EntityConfig,
+  entityId?: string | null,
+  detail?: string
+): Promise<void> {
+  try {
+    const u = await db.execute({
+      sql: `SELECT email, "firstName", "lastName" FROM users WHERE id = ?`,
+      args: [requester.id],
+    });
+    const row = u.rows[0];
+    await audit(
+      {
+        userId: requester.id,
+        userEmail: (row?.email as string) ?? null,
+        userName: row ? `${row.firstName} ${row.lastName}` : null,
+        organizationId: requester.organizationId,
+        action,
+        entity: config.table,
+        entityId: entityId ?? null,
+        detail: detail ?? null,
+      },
+      request
+    );
+  } catch {
+    // nunca bloquear la operación por un fallo de auditoría
+  }
 }
 
 /** Organización efectiva para filtrar: la del usuario, o la que un super_admin pida por query param. */
@@ -105,6 +139,7 @@ export function makeCollectionHandlers(config: EntityConfig) {
           sql: `SELECT ${cols} FROM "${config.table}" WHERE "organizationId" = ? ORDER BY "createdAt" DESC`,
           args: [orgId],
         });
+        await logOp(requester, request, 'view', config);
         return NextResponse.json(result.rows.map(r => deserialize(config, r as unknown as Record<string, unknown>)));
       }
       if (requester.role !== 'super_admin') {
@@ -113,6 +148,7 @@ export function makeCollectionHandlers(config: EntityConfig) {
     }
 
     const result = await db.execute(`SELECT ${cols} FROM "${config.table}" ORDER BY "createdAt" DESC`);
+    await logOp(requester, request, 'view', config);
     return NextResponse.json(result.rows.map(r => deserialize(config, r as unknown as Record<string, unknown>)));
   };
 
@@ -146,6 +182,7 @@ export function makeCollectionHandlers(config: EntityConfig) {
     const names = Object.keys(row).join(', ');
     const placeholders = Object.keys(row).map(() => '?').join(', ');
     await db.execute({ sql: `INSERT INTO "${config.table}" (${names}) VALUES (${placeholders})`, args: Object.values(row) });
+    await logOp(requester, request, 'create', config, data.id as string);
     return NextResponse.json(deserialize(config, data), { status: 201 });
   };
 
@@ -210,6 +247,7 @@ export function makeItemHandlers(config: EntityConfig) {
       sql: `UPDATE "${config.table}" SET ${assignments} WHERE id = ?`,
       args,
     });
+    await logOp(requester, request, 'update', config, params.id);
     const updated = await db.execute({
       sql: `SELECT ${cols} FROM "${config.table}" WHERE id = ?`,
       args: [params.id],
@@ -235,6 +273,7 @@ export function makeItemHandlers(config: EntityConfig) {
     if (result.rowsAffected === 0) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
+    await logOp(requester, request, 'delete', config, params.id);
     return NextResponse.json({ success: true });
   };
 

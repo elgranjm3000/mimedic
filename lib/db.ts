@@ -145,6 +145,22 @@ export function ensureDb(): Promise<void> {
         "updatedAt" TEXT NOT NULL
       )`);
 
+      // Log de auditoría: sesiones y operaciones por usuario
+      await db.execute(`CREATE TABLE IF NOT EXISTS audit_log (
+        id TEXT PRIMARY KEY,
+        ts TEXT NOT NULL,
+        "userId" TEXT,
+        "userEmail" TEXT,
+        "userName" TEXT,
+        "organizationId" TEXT,
+        action TEXT NOT NULL,
+        entity TEXT,
+        "entityId" TEXT,
+        detail TEXT,
+        ip TEXT
+      )`);
+      await db.execute(`CREATE INDEX IF NOT EXISTS idx_audit_ts ON audit_log ("ts" DESC)`);
+
       // Migración de datos: org por defecto + roles
       const now = new Date().toISOString();
       const orgResult = await db.execute('SELECT id FROM organizations LIMIT 1');

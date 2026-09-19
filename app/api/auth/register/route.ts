@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { db, ensureDb } from '@/lib/db';
+import { audit } from '@/lib/audit';
 
 const TRIAL_DAYS = 7;
 
@@ -52,6 +53,16 @@ export async function POST(request: Request) {
       args: [crypto.randomUUID(), adminEmail, adminHash, adminFirstName, adminLastName, orgId, nowIso, nowIso],
     },
   ]);
+
+  await audit({
+    userEmail: adminEmail,
+    userName: `${adminFirstName} ${adminLastName}`,
+    organizationId: orgId,
+    action: 'register',
+    entity: 'organizations',
+    entityId: orgId,
+    detail: `Prueba gratuita de ${TRIAL_DAYS} días — ${orgName}`,
+  }, request);
 
   return NextResponse.json({
     id: crypto.randomUUID(), // placeholder, el cliente inicia sesión con las credenciales

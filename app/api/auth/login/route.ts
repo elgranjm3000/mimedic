@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { db, ensureDb } from '@/lib/db';
+import { audit } from '@/lib/audit';
 
 export async function POST(request: Request) {
   await ensureDb();
@@ -21,18 +22,29 @@ export async function POST(request: Request) {
   });
 
   if (result.rows.length === 0) {
+    await audit({ userEmail: email, action: 'login_failed', detail: 'Email inexistente' }, request);
     return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 });
   }
 
   const row = result.rows[0];
   if (!row.isActive) {
+    await audit({ userId: row.id as string, userEmail: email, action: 'login_failed', detail: 'Usuario inactivo' }, request);
     return NextResponse.json({ error: 'Usuario inactivo' }, { status: 401 });
   }
 
   const valid = await bcrypt.compare(password, row.password_hash as string);
   if (!valid) {
+    await audit({ userId: row.id as string, userEmail: email, action: 'login_failed', detail: 'Contraseña incorrecta' }, request);
     return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 });
   }
+
+  await audit({
+    userId: row.id as string,
+    userEmail: row.email as string,
+    userName: `${row.firstName} ${row.lastName}`,
+    organizationId: (row.organizationId as string | null) ?? null,
+    action: 'login',
+  }, request);
 
   return NextResponse.json({
     id: row.id,

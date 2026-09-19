@@ -17,6 +17,7 @@ import {
   LogOut,
   Menu,
   Hospital,
+  ShieldCheck,
   User as UserIcon,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
@@ -91,6 +92,12 @@ const navItems = [
     href: '/organizations',
     label: 'nav.organizations',
     icon: Hospital,
+    roles: ['super_admin'],
+  },
+  {
+    href: '/audit',
+    label: 'nav.audit',
+    icon: ShieldCheck,
     roles: ['super_admin'],
   },
 ];
