@@ -131,6 +131,13 @@ export function ensureDb(): Promise<void> {
       }
       await db.execute(`UPDATE organizations SET currency = 'USD' WHERE currency IS NULL`);
 
+      // Prueba gratuita de 7 días: fecha de vencimiento; NULL = licencia activa
+      try {
+        await db.execute(`ALTER TABLE organizations ADD COLUMN "trialEndsAt" TEXT`);
+      } catch {
+        // la columna ya existe
+      }
+
       // Tasa de cambio BCV (USD→VES) con respaldo local
       await db.execute(`CREATE TABLE IF NOT EXISTS exchange_rates (
         code TEXT PRIMARY KEY,

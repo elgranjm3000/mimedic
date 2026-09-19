@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -126,15 +127,16 @@ export function LoginForm() {
             <Button type="submit" disabled={loading} className="w-full">
               {loading ? (lang === 'es' ? 'Iniciando sesión...' : 'Signing in...') : t('login.submit')}
             </Button>
-          </form>
 
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-2">Cuentas de prueba:</p>
-            <div className="space-y-1 text-xs">
-              <p><strong>Admin:</strong> admin@medicontrol.com / admin123</p>
-              <p><strong>Doctor:</strong> doctor@medicontrol.com / doctor123</p>
+            <div className="text-center text-sm">
+              <span className="text-gray-600">
+                {lang === 'es' ? '¿No tenés cuenta? ' : "Don't have an account? "}
+              </span>
+              <Link href="/registrarse" className="font-semibold text-teal-700 hover:text-teal-800">
+                {lang === 'es' ? 'Probá gratis 7 días' : 'Try free for 7 days'}
+              </Link>
             </div>
-          </div>
+          </form>
         </CardContent>
       </Card>
     </div>

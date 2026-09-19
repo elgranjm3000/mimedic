@@ -13,8 +13,10 @@ export async function POST(request: Request) {
   }
 
   const result = await db.execute({
-    sql: `SELECT id, email, password_hash, "firstName", "lastName", role, "organizationId", avatar, "isActive", "createdAt", "updatedAt"
-          FROM users WHERE email = ?`,
+    sql: `SELECT u.id, u.email, u.password_hash, u."firstName", u."lastName", u.role, u."organizationId", u.avatar, u."isActive", u."createdAt", u."updatedAt",
+                 o.name AS "organizationName", o."trialEndsAt" AS "trialEndsAt"
+          FROM users u LEFT JOIN organizations o ON o.id = u."organizationId"
+          WHERE u.email = ?`,
     args: [email],
   });
 
@@ -39,6 +41,8 @@ export async function POST(request: Request) {
     lastName: row.lastName,
     role: row.role,
     organizationId: row.organizationId,
+    organizationName: row.organizationName,
+    trialEndsAt: row.trialEndsAt,
     avatar: row.avatar,
     isActive: Boolean(row.isActive),
     createdAt: row.createdAt,

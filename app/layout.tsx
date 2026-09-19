@@ -6,6 +6,7 @@ import { AuthProvider } from '@/contexts/auth-context';
 import { I18nProvider } from '@/contexts/i18n-context';
 import { ProtectedRoute } from '@/components/protected-route';
 import { Navigation } from '@/components/navigation';
+import { TrialGate } from '@/components/trial-gate';
 
 const figtree = Figtree({ subsets: ['latin'] });
 
@@ -27,9 +28,11 @@ export default function RootLayout({
             <ProtectedRoute>
             <div className="min-h-screen bg-gray-50">
               <Navigation />
-              <main className="py-8">
-                {children}
-              </main>
+              <TrialGate>
+                <main className="py-8">
+                  {children}
+                </main>
+              </TrialGate>
             </div>
             </ProtectedRoute>
           </I18nProvider>

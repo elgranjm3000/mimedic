@@ -22,6 +22,9 @@ export interface User {
   organizationId?: string | null;
   avatar?: string | null;
   signature?: string | null;
+  /** Datos transitorios de sesión: organización y prueba gratuita */
+  organizationName?: string | null;
+  trialEndsAt?: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

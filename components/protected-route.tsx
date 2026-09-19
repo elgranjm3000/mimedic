@@ -1,7 +1,11 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { LoginForm } from '@/components/login-form';
+
+/** Rutas públicas accesibles sin sesión. */
+const PUBLIC_PATHS = ['/registrarse'];
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,6 +14,8 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
+  const pathname = usePathname();
+  const isPublicPath = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
 
   if (loading) {
     return (
@@ -17,6 +23,10 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-teal-600"></div>
       </div>
     );
+  }
+
+  if (!user && isPublicPath) {
+    return <>{children}</>;
   }
 
   if (!user) {
