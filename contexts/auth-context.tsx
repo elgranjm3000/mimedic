@@ -33,6 +33,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem(CURRENT_USER_KEY);
+    // Recarga completa: limpia el cache del router de Next para que la
+    // sesión anterior no deje vistas residuales al entrar con otro usuario.
+    window.location.replace('/');
   };
 
   const updateUserState = (updated: User) => {
