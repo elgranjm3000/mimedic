@@ -1,4 +1,5 @@
 'use client';
+import { useLang } from '@/contexts/i18n-context';
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -17,6 +18,7 @@ interface UserFormProps {
 }
 
 export function UserForm({ user, onSubmit, onCancel }: UserFormProps) {
+  const { t } = useLang();
   const [loading, setLoading] = useState(false);
   
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
@@ -55,7 +57,7 @@ export function UserForm({ user, onSubmit, onCancel }: UserFormProps) {
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="firstName">Nombre</Label>
+              <Label htmlFor="firstName">{t('Nombre')}</Label>
               <Input
                 id="firstName"
                 {...register('firstName', { required: 'El nombre es requerido' })}
@@ -67,7 +69,7 @@ export function UserForm({ user, onSubmit, onCancel }: UserFormProps) {
             </div>
             
             <div>
-              <Label htmlFor="lastName">Apellido</Label>
+              <Label htmlFor="lastName">{t('Apellido')}</Label>
               <Input
                 id="lastName"
                 {...register('lastName', { required: 'El apellido es requerido' })}
@@ -80,7 +82,7 @@ export function UserForm({ user, onSubmit, onCancel }: UserFormProps) {
           </div>
 
           <div>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('Email')}</Label>
             <Input
               id="email"
               type="email"

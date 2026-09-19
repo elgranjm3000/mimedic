@@ -1,4 +1,5 @@
 'use client';
+import { useLang } from '@/contexts/i18n-context';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -8,7 +9,8 @@ import {
   FileText, 
   Plus, 
   Search, 
-  Edit, 
+  Edit,
+  Printer, 
   Trash2, 
   User,
   Calendar,
@@ -24,7 +26,7 @@ import { useAuth } from '@/contexts/auth-context';
 
 const statusColors = {
   active: 'bg-emerald-100 text-emerald-800',
-  completed: 'bg-blue-100 text-blue-800',
+  completed: 'bg-teal-100 text-teal-800',
   cancelled: 'bg-red-100 text-red-800',
 };
 
@@ -35,6 +37,7 @@ const statusLabels = {
 };
 
 export default function PrescriptionsPage() {
+  const { t } = useLang();
   const { prescriptions, loading, deletePrescription } = usePrescriptions();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
@@ -87,7 +90,7 @@ export default function PrescriptionsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-            <FileText className="h-8 w-8 text-blue-600" />
+            <FileText className="h-8 w-8 text-teal-600" />
             Prescripciones Electrónicas
           </h1>
           <p className="text-gray-600 mt-1">
@@ -121,10 +124,10 @@ export default function PrescriptionsPage() {
                 <SelectValue placeholder="Filtrar por estado" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los estados</SelectItem>
-                <SelectItem value="active">Activa</SelectItem>
-                <SelectItem value="completed">Completada</SelectItem>
-                <SelectItem value="cancelled">Cancelada</SelectItem>
+                <SelectItem value="all">{t('Todos los estados')}</SelectItem>
+                <SelectItem value="active">{t('Activa')}</SelectItem>
+                <SelectItem value="completed">{t('Completada')}</SelectItem>
+                <SelectItem value="cancelled">{t('Cancelada')}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -236,6 +239,16 @@ export default function PrescriptionsPage() {
                     >
                       <Link href={`/prescriptions/${prescription.id}/edit`}>
                         <Edit className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      asChild
+                      title="Imprimir PDF"
+                    >
+                      <Link href={`/prescriptions/${prescription.id}/print`}>
+                        <Printer className="h-4 w-4" />
                       </Link>
                     </Button>
                     <Button

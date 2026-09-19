@@ -1,4 +1,5 @@
 'use client';
+import { useLang } from '@/contexts/i18n-context';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -8,7 +9,8 @@ import {
   CreditCard, 
   Plus, 
   Search, 
-  Edit, 
+  Edit,
+  Printer, 
   Trash2, 
   User,
   Calendar,
@@ -21,6 +23,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useInvoices } from '@/hooks/use-invoices';
+import { useOrgSettings } from '@/hooks/use-org-settings';
+import { BcvRateCard } from '@/components/bcv-rate-card';
+import { formatMoney } from '@/lib/format';
 
 const statusColors = {
   pending: 'bg-amber-100 text-amber-800',
@@ -37,7 +42,9 @@ const statusLabels = {
 };
 
 export default function InvoicesPage() {
+  const { t } = useLang();
   const { invoices, loading, deleteInvoice } = useInvoices();
+  const { currency } = useOrgSettings();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -88,7 +95,7 @@ export default function InvoicesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-            <CreditCard className="h-8 w-8 text-blue-600" />
+            <CreditCard className="h-8 w-8 text-teal-600" />
             Facturación
           </h1>
           <p className="text-gray-600 mt-1">
@@ -104,13 +111,14 @@ export default function InvoicesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <BcvRateCard />
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Ingresos Totales</p>
-                <p className="text-3xl font-bold text-gray-900">${totalRevenue.toFixed(2)}</p>
+                <p className="text-sm font-medium text-gray-600">{t('Ingresos Totales')}</p>
+                <p className="text-3xl font-bold text-gray-900">{formatMoney(totalRevenue, currency)}</p>
               </div>
               <div className="p-3 rounded-full bg-emerald-100">
                 <DollarSign className="h-6 w-6 text-emerald-600" />
@@ -123,8 +131,8 @@ export default function InvoicesPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Pendientes de Pago</p>
-                <p className="text-3xl font-bold text-gray-900">${pendingAmount.toFixed(2)}</p>
+                <p className="text-sm font-medium text-gray-600">{t('Pendientes de Pago')}</p>
+                <p className="text-3xl font-bold text-gray-900">{formatMoney(pendingAmount, currency)}</p>
               </div>
               <div className="p-3 rounded-full bg-amber-100">
                 <CreditCard className="h-6 w-6 text-amber-600" />
@@ -137,11 +145,11 @@ export default function InvoicesPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Facturas</p>
+                <p className="text-sm font-medium text-gray-600">{t('Total Facturas')}</p>
                 <p className="text-3xl font-bold text-gray-900">{invoices.length}</p>
               </div>
-              <div className="p-3 rounded-full bg-blue-100">
-                <CreditCard className="h-6 w-6 text-blue-600" />
+              <div className="p-3 rounded-full bg-teal-100">
+                <CreditCard className="h-6 w-6 text-teal-600" />
               </div>
             </div>
           </CardContent>
@@ -155,7 +163,7 @@ export default function InvoicesPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Buscar por paciente o número de factura..."
+                placeholder={t('Buscar por paciente o número de factura...')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -167,11 +175,11 @@ export default function InvoicesPage() {
                 <SelectValue placeholder="Filtrar por estado" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los estados</SelectItem>
-                <SelectItem value="pending">Pendiente</SelectItem>
-                <SelectItem value="paid">Pagada</SelectItem>
-                <SelectItem value="overdue">Vencida</SelectItem>
-                <SelectItem value="cancelled">Cancelada</SelectItem>
+                <SelectItem value="all">{t('Todos los estados')}</SelectItem>
+                <SelectItem value="pending">{t('Pendiente')}</SelectItem>
+                <SelectItem value="paid">{t('Pagada')}</SelectItem>
+                <SelectItem value="overdue">{t('Vencida')}</SelectItem>
+                <SelectItem value="cancelled">{t('Cancelada')}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -252,18 +260,18 @@ export default function InvoicesPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-sm">
                       <div>
-                        <p className="text-gray-500">Subtotal</p>
-                        <p className="font-medium">${invoice.subtotal.toFixed(2)}</p>
+                        <p className="text-gray-500">{t('Subtotal')}</p>
+                        <p className="font-medium tabular-nums">{formatMoney(invoice.subtotal, currency)}</p>
                       </div>
                       <div>
-                        <p className="text-gray-500">Impuestos</p>
-                        <p className="font-medium">${invoice.tax.toFixed(2)}</p>
+                        <p className="text-gray-500">{t('Impuestos')}</p>
+                        <p className="font-medium tabular-nums">{formatMoney(invoice.tax, currency)}</p>
                       </div>
                       <div>
-                        <p className="text-gray-500">Total</p>
-                        <p className="font-bold text-lg">${invoice.total.toFixed(2)}</p>
+                        <p className="text-gray-500">{t('Total')}</p>
+                        <p className="font-bold text-lg tabular-nums">{formatMoney(invoice.total, currency)}</p>
                       </div>
                     </div>
 
@@ -282,6 +290,16 @@ export default function InvoicesPage() {
                     >
                       <Link href={`/invoices/${invoice.id}/edit`}>
                         <Edit className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      asChild
+                      title="Imprimir PDF"
+                    >
+                      <Link href={`/invoices/${invoice.id}/print`}>
+                        <Printer className="h-4 w-4" />
                       </Link>
                     </Button>
                     <Button

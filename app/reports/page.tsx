@@ -17,9 +17,12 @@ import { usePatients } from '@/hooks/use-patients';
 import { useAppointments } from '@/hooks/use-appointments';
 import { useInvoices } from '@/hooks/use-invoices';
 import { usePrescriptions } from '@/hooks/use-prescriptions';
+import { useOrgSettings } from '@/hooks/use-org-settings';
+import { formatMoney } from '@/lib/format';
 
 export default function ReportsPage() {
   const { patients } = usePatients();
+  const { currency } = useOrgSettings();
   const { appointments } = useAppointments();
   const { invoices } = useInvoices();
   const { prescriptions } = usePrescriptions();
@@ -125,7 +128,7 @@ export default function ReportsPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-          <BarChart3 className="h-8 w-8 text-blue-600" />
+          <BarChart3 className="h-8 w-8 text-teal-600" />
           Reportes y Análisis
         </h1>
         <p className="text-gray-600 mt-1">
@@ -146,8 +149,8 @@ export default function ReportsPage() {
                   +{stats.newPatientsThisMonth} este mes
                 </p>
               </div>
-              <div className="p-3 rounded-full bg-blue-100">
-                <Users className="h-6 w-6 text-blue-600" />
+              <div className="p-3 rounded-full bg-teal-100">
+                <Users className="h-6 w-6 text-teal-600" />
               </div>
             </div>
           </CardContent>
@@ -175,10 +178,10 @@ export default function ReportsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Ingresos Totales</p>
-                <p className="text-3xl font-bold text-gray-900">${stats.totalRevenue.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-gray-900">{formatMoney(stats.totalRevenue, currency)}</p>
                 <p className="text-sm text-emerald-600 flex items-center mt-1">
                   <TrendingUp className="h-4 w-4 mr-1" />
-                  ${stats.revenueThisMonth.toFixed(2)} este mes
+                  {formatMoney(stats.revenueThisMonth, currency)} este mes
                 </p>
               </div>
               <div className="p-3 rounded-full bg-emerald-100">
@@ -222,7 +225,7 @@ export default function ReportsPage() {
                 return (
                   <div key={type} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                      <div className="w-4 h-4 bg-teal-500 rounded"></div>
                       <span className="text-sm font-medium">
                         {typeLabels[type as keyof typeof typeLabels] || type}
                       </span>
@@ -248,7 +251,7 @@ export default function ReportsPage() {
               <div className="flex justify-between items-center p-4 bg-emerald-50 rounded-lg">
                 <div>
                   <p className="text-sm font-medium text-emerald-800">Ingresos Cobrados</p>
-                  <p className="text-2xl font-bold text-emerald-900">${stats.totalRevenue.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-emerald-900">{formatMoney(stats.totalRevenue, currency)}</p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-emerald-600" />
               </div>
@@ -256,17 +259,17 @@ export default function ReportsPage() {
               <div className="flex justify-between items-center p-4 bg-amber-50 rounded-lg">
                 <div>
                   <p className="text-sm font-medium text-amber-800">Pendiente de Cobro</p>
-                  <p className="text-2xl font-bold text-amber-900">${stats.pendingRevenue.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-amber-900">{formatMoney(stats.pendingRevenue, currency)}</p>
                 </div>
                 <CreditCard className="h-8 w-8 text-amber-600" />
               </div>
               
-              <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
+              <div className="flex justify-between items-center p-4 bg-teal-50 rounded-lg">
                 <div>
-                  <p className="text-sm font-medium text-blue-800">Ingresos Este Mes</p>
-                  <p className="text-2xl font-bold text-blue-900">${stats.revenueThisMonth.toFixed(2)}</p>
+                  <p className="text-sm font-medium text-teal-800">Ingresos Este Mes</p>
+                  <p className="text-2xl font-bold text-teal-900">{formatMoney(stats.revenueThisMonth, currency)}</p>
                 </div>
-                <BarChart3 className="h-8 w-8 text-blue-600" />
+                <BarChart3 className="h-8 w-8 text-teal-600" />
               </div>
             </div>
           </CardContent>
@@ -335,7 +338,7 @@ export default function ReportsPage() {
                     <p className="text-sm text-gray-600">{month.appointments} citas</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium text-gray-900">${month.revenue.toFixed(2)}</p>
+                    <p className="font-medium text-gray-900">{formatMoney(month.revenue, currency)}</p>
                     <p className="text-sm text-gray-600">ingresos</p>
                   </div>
                 </div>

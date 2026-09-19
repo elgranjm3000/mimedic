@@ -1,0 +1,280 @@
+'use client';
+
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+
+export type Lang = 'es' | 'en';
+
+const dict: Record<Lang, Record<string, string>> = {
+  es: {
+    // Navegación
+    'nav.dashboard': 'Dashboard',
+    'nav.patients': 'Pacientes',
+    'nav.appointments': 'Citas',
+    'nav.calendar': 'Calendario',
+    'nav.prescriptions': 'Prescripciones',
+    'nav.invoices': 'Facturación',
+    'nav.reports': 'Reportes',
+    'nav.users': 'Usuarios',
+    'nav.organizations': 'Organizaciones',
+    'nav.myAccount': 'Mi Cuenta',
+    'nav.myProfile': 'Mi Perfil',
+    'nav.logout': 'Cerrar Sesión',
+    'nav.openMenu': 'Abrir menú de navegación',
+    // Roles
+    'role.super_admin': 'Super Admin',
+    'role.admin': 'Administrador',
+    'role.doctor': 'Doctor',
+    'role.nurse': 'Enfermera',
+    'role.receptionist': 'Recepcionista',
+    // Login
+    'login.title': 'Iniciar Sesión',
+    'login.subtitle': 'Accedé a tu cuenta de MediControl',
+    'login.email': 'Email',
+    'login.password': 'Contraseña',
+    'login.submit': 'Ingresar',
+    'login.invalid': 'Email o contraseña incorrectos',
+  },
+  en: {
+    'nav.dashboard': 'Dashboard',
+    'nav.patients': 'Patients',
+    'nav.appointments': 'Appointments',
+    'nav.calendar': 'Calendar',
+    'nav.prescriptions': 'Prescriptions',
+    'nav.invoices': 'Invoicing',
+    'nav.reports': 'Reports',
+    'nav.users': 'Users',
+    'nav.organizations': 'Organizations',
+    'nav.myAccount': 'My Account',
+    'nav.myProfile': 'My Profile',
+    'nav.logout': 'Sign Out',
+    'nav.openMenu': 'Open navigation menu',
+    'role.super_admin': 'Super Admin',
+    'role.admin': 'Administrator',
+    'role.doctor': 'Doctor',
+    'role.nurse': 'Nurse',
+    'role.receptionist': 'Receptionist',
+    'login.title': 'Sign In',
+    'login.subtitle': 'Access your MediControl account',
+    'login.email': 'Email',
+    'login.password': 'Password',
+    'login.submit': 'Sign In',
+    'login.invalid': 'Incorrect email or password',
+  },
+};
+
+/**
+ * Traducción directa de textos en español (los que ya viven en las páginas).
+ * Si un texto no está en el mapa, se muestra tal cual.
+ */
+const esEn: Record<string, string> = {
+  'Nuevo': 'New',
+  'Nueva': 'New',
+  'Editar': 'Edit',
+  'Eliminar': 'Delete',
+  'Guardar': 'Save',
+  'Cancelar': 'Cancel',
+  'Buscar': 'Search',
+  'Limpiar': 'Clear',
+  'Filtros': 'Filters',
+  'Limpiar Filtros': 'Clear Filters',
+  'Guardar cambios': 'Save changes',
+  'Todos': 'All',
+  'Activo': 'Active',
+  'Inactiva': 'Inactive',
+  'Inactivos': 'Inactive',
+  'Activos': 'Active',
+  'Fecha': 'Date',
+  'Hora': 'Time',
+  'Estado': 'Status',
+  'Tipo': 'Type',
+  'Acciones': 'Actions',
+  'Nombre': 'First name',
+  'Apellido': 'Last name',
+  'Email': 'Email',
+  'Teléfono': 'Phone',
+  'Contraseña': 'Password',
+  'Rol': 'Role',
+  'Cargando...': 'Loading...',
+  'Pacientes': 'Patients',
+  'Nuevo Paciente': 'New Patient',
+  'Nueva Paciente': 'New Patient',
+  'Patient': 'Patient',
+  'Paciente': 'Patient',
+  'Paciente no encontrado': 'Patient not found',
+  'Puede que haya sido eliminado.': 'It may have been deleted.',
+  'Editar Paciente': 'Edit Patient',
+  'Modifica los datos del paciente': 'Edit patient details',
+  'Gestión de Pacientes': 'Patient Management',
+  'Administra la información de tus pacientes': 'Manage your patient information',
+  'Buscar por nombre o email...': 'Search by name or email...',
+  'No se encontraron pacientes': 'No patients found',
+  'No hay pacientes registrados': 'No patients registered',
+  'Intenta ajustar los filtros de búsqueda': 'Try adjusting your filters',
+  'Comienza agregando el primer paciente': 'Start by adding the first patient',
+  'Agregar Primer Paciente': 'Add First Patient',
+  'Paciente eliminado junto con sus citas, recetas y facturas': 'Patient deleted along with their appointments, prescriptions and invoices',
+  'Paciente eliminado': 'Patient deleted',
+  'Citas': 'Appointments',
+  'Citas Médicas': 'Medical Appointments',
+  'Nueva Cita': 'New Appointment',
+  'Editar Cita': 'Edit Appointment',
+  'Cita no encontrada': 'Appointment not found',
+  'Cita': 'Appointment',
+  'Modifica los datos de la cita': 'Edit appointment details',
+  'Gestiona todas las citas programadas': 'Manage all scheduled appointments',
+  'Buscar por paciente o notas...': 'Search by patient or notes...',
+  'Todos los estados': 'All statuses',
+  'Todos los tipos': 'All types',
+  'No se encontraron citas': 'No appointments found',
+  'No hay citas programadas': 'No appointments scheduled',
+  'Comienza programando la primera cita médica': 'Start by scheduling the first appointment',
+  'Programar Primera Cita': 'Schedule First Appointment',
+  'Cita eliminada correctamente': 'Appointment deleted successfully',
+  'Programada': 'Scheduled',
+  'Confirmada': 'Confirmed',
+  'Completada': 'Completed',
+  'Cancelada': 'Cancelled',
+  'Consulta': 'Consultation',
+  'Chequeo': 'Checkup',
+  'Procedimiento': 'Procedure',
+  'Seguimiento': 'Follow-up',
+  'Hoy': 'Today',
+  'Leyenda': 'Legend',
+  'Mes anterior': 'Previous month',
+  'Mes siguiente': 'Next month',
+  'más': 'more',
+  'Prescripciones': 'Prescriptions',
+  'Nueva Prescripción': 'New Prescription',
+  'Editar Prescripción': 'Edit Prescription',
+  'Prescripción no encontrada': 'Prescription not found',
+  'Modifica los datos de la prescripción': 'Edit prescription details',
+  'Gestiona las prescripciones médicas': 'Manage medical prescriptions',
+  'Buscar por paciente o diagnóstico...': 'Search by patient or diagnosis...',
+  'No se encontraron prescripciones': 'No prescriptions found',
+  'No hay prescripciones registradas': 'No prescriptions registered',
+  'Comienza creando la primera prescripción': 'Start by creating the first prescription',
+  'Crear Primera Prescripción': 'Create First Prescription',
+  'Receta médica': 'Medical Prescription',
+  'Profesional': 'Professional',
+  'Diagnóstico': 'Diagnosis',
+  'Medicamento': 'Medication',
+  'Dosis': 'Dosage',
+  'Frecuencia': 'Frequency',
+  'Duración': 'Duration',
+  'Indicaciones generales': 'General instructions',
+  'Firma y sello': 'Signature and seal',
+  'Este documento carece de validez sin la firma del profesional.': 'This document is not valid without the professional\'s signature.',
+  'Facturación': 'Invoicing',
+  'Nueva Factura': 'New Invoice',
+  'Editar Factura': 'Edit Invoice',
+  'Factura no encontrada': 'Invoice not found',
+  'Factura': 'Invoice',
+  'Modifica los datos de la factura': 'Edit invoice details',
+  'Gestiona todas las facturas y pagos': 'Manage all invoices and payments',
+  'Buscar por paciente o número de factura...': 'Search by patient or invoice number...',
+  'No se encontraron facturas': 'No invoices found',
+  'No hay facturas registradas': 'No invoices registered',
+  'Comienza creando la primera factura': 'Start by creating the first invoice',
+  'Crear Primera Factura': 'Create First Invoice',
+  'Ingresos Totales': 'Total Revenue',
+  'Pendientes de Pago': 'Pending Payment',
+  'Total Facturas': 'Total Invoices',
+  'Pendiente': 'Pending',
+  'Pagada': 'Paid',
+  'Vencida': 'Overdue',
+  'Anulada': 'Void',
+  'Pendiente de pago': 'Pending payment',
+  'Subtotal': 'Subtotal',
+  'Impuestos': 'Taxes',
+  'Total': 'Total',
+  'Documento de factura': 'Invoice document',
+  'Factura Nº': 'Invoice No.',
+  'Paciente ': 'Patient ',
+  'Fecha de emisión': 'Issue date',
+  'Vencimiento': 'Due date',
+  'Fecha de pago': 'Payment date',
+  'Observaciones': 'Notes',
+  'Cant.': 'Qty',
+  'Precio unit.': 'Unit price',
+  'Importe': 'Amount',
+  'Descripción': 'Description',
+  'Generado por MediControl': 'Generated by MediControl',
+  'Documento válido como comprobante de la prestación facturada.': 'Valid document as proof of the invoiced service.',
+  'Gestión de Usuarios': 'User Management',
+  'Administra los usuarios y roles del sistema': 'Manage system users and roles',
+  'Nuevo Usuario': 'New User',
+  'Editar Usuario': 'Edit User',
+  'Usuario': 'User',
+  'Usuarios': 'Users',
+  'Usuario no encontrado': 'User not found',
+  'Modifica los datos del usuario': 'Edit user details',
+  'No se encontraron usuarios': 'No users found',
+  'No hay usuarios registrados': 'No users registered',
+  'Comienza agregando el primer usuario al sistema': 'Start by adding the first user',
+  'Agregar Primer Usuario': 'Add First User',
+  'Todos los roles': 'All roles',
+  'Registrado': 'Registered',
+  'Organizaciones': 'Organizations',
+  'Nueva Organización': 'New Organization',
+  'Crear Primera Organización': 'Create First Organization',
+  'No se encontraron organizaciones': 'No organizations found',
+  'No hay organizaciones registradas': 'No organizations registered',
+  'Crea la primera organización para comenzar': 'Create the first organization to get started',
+  'Hospitales, clínicas y doctores privados registrados en la plataforma': 'Hospitals, clinics and private doctors registered on the platform',
+  'Hospital': 'Hospital',
+  'Clínica': 'Clinic',
+  'Doctor Privado': 'Private Doctor',
+  'Activa': 'Active',
+  'Buscar por nombre...': 'Search by name...',
+  'Tipo de organización': 'Organization type',
+  'Datos de la organización': 'Organization details',
+  'Administrador de la organización': 'Organization administrator',
+  'Moneda de facturación': 'Billing currency',
+  'Mi Perfil': 'My Profile',
+  'Configurá tus datos personales y tu foto de perfil': 'Set up your personal details and profile photo',
+  'Datos personales': 'Personal details',
+  'Cambiar contraseña': 'Change password',
+  'Firma digital': 'Digital signature',
+  'Subir foto': 'Upload photo',
+  'Cambiar foto': 'Change photo',
+  'Cambiar firma': 'Change signature',
+  'Subir firma': 'Upload signature',
+  'Quitar firma': 'Remove signature',
+  'Sin firma cargada': 'No signature uploaded',
+  'Dibujar firma': 'Draw signature',
+  'Perfil actualizado correctamente': 'Profile updated successfully'
+};
+
+const I18nContext = createContext<{ lang: Lang; setLang: (l: Lang) => void; t: (key: string) => string } | undefined>(undefined);
+
+export function I18nProvider({ children }: { children: ReactNode }) {
+  const [lang, setLangState] = useState<Lang>('es');
+
+  useEffect(() => {
+    const stored = localStorage.getItem('medical_lang') as Lang | null;
+    if (stored === 'es' || stored === 'en') setLangState(stored);
+  }, []);
+
+  const setLang = (l: Lang) => {
+    setLangState(l);
+    localStorage.setItem('medical_lang', l);
+  };
+
+  const t = (key: string) => {
+    if (dict[lang][key]) return dict[lang][key];
+    if (lang === 'en' && esEn[key]) return esEn[key];
+    return key;
+  };
+
+  return (
+    <I18nContext.Provider value={{ lang, setLang, t }}>
+      {children}
+    </I18nContext.Provider>
+  );
+}
+
+export function useLang() {
+  const ctx = useContext(I18nContext);
+  if (!ctx) throw new Error('useLang must be used within I18nProvider');
+  return ctx;
+}

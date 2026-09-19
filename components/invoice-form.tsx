@@ -1,4 +1,5 @@
 'use client';
+import { useLang } from '@/contexts/i18n-context';
 
 import { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -8,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PatientCombobox } from '@/components/patient-combobox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2 } from 'lucide-react';
 import { usePatients } from '@/hooks/use-patients';
@@ -19,6 +21,7 @@ interface InvoiceFormProps {
 }
 
 export function InvoiceForm({ invoice, onSubmit, onCancel }: InvoiceFormProps) {
+  const { t } = useLang();
   const [loading, setLoading] = useState(false);
   const { patients } = usePatients();
   
@@ -58,16 +61,18 @@ export function InvoiceForm({ invoice, onSubmit, onCancel }: InvoiceFormProps) {
       // Update item totals
       const updatedItems = data.items.map((item: InvoiceItem) => ({
         ...item,
-        total: item.quantity * item.unitPrice
+        quantity: Number(item.quantity) || 0,
+        unitPrice: Number(item.unitPrice) || 0,
+        total: (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0)
       }));
 
       await onSubmit({
         ...data,
         patientName,
         items: updatedItems,
-        subtotal,
-        tax,
-        total,
+        subtotal: Number(subtotal) || 0,
+        tax: Number(tax) || 0,
+        total: Number(total) || 0,
       });
     } finally {
       setLoading(false);
@@ -93,19 +98,12 @@ export function InvoiceForm({ invoice, onSubmit, onCancel }: InvoiceFormProps) {
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="patientId">Paciente</Label>
-              <Select onValueChange={(value) => setValue('patientId', value)} defaultValue={invoice?.patientId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar paciente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {patients.map((patient) => (
-                    <SelectItem key={patient.id} value={patient.id}>
-                      {patient.firstName} {patient.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="patientId">{t('Paciente')}</Label>
+              <PatientCombobox
+              patients={patients}
+              value={selectedPatientId || ''}
+              onValueChange={(value) => setValue('patientId', value)}
+            />
               {errors.patientId && (
                 <p className="text-sm text-red-600 mt-1">Debe seleccionar un paciente</p>
               )}
@@ -153,7 +151,7 @@ export function InvoiceForm({ invoice, onSubmit, onCancel }: InvoiceFormProps) {
                   
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="md:col-span-2">
-                      <Label htmlFor={`items.${index}.description`}>Descripción</Label>
+                      <Label htmlFor={`items.${index}.description`}>{t('Descripción')}</Label>
                       <Input
                         {...register(`items.${index}.description`, { required: 'La descripción es requerida' })}
                         placeholder="Descripción del servicio/producto"
@@ -232,10 +230,10 @@ export function InvoiceForm({ invoice, onSubmit, onCancel }: InvoiceFormProps) {
                   <SelectValue placeholder="Estado de la factura" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pending">Pendiente</SelectItem>
-                  <SelectItem value="paid">Pagada</SelectItem>
-                  <SelectItem value="overdue">Vencida</SelectItem>
-                  <SelectItem value="cancelled">Cancelada</SelectItem>
+                  <SelectItem value="pending">{t('Pendiente')}</SelectItem>
+                  <SelectItem value="paid">{t('Pagada')}</SelectItem>
+                  <SelectItem value="overdue">{t('Vencida')}</SelectItem>
+                  <SelectItem value="cancelled">{t('Cancelada')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

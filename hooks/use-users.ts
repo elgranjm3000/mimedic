@@ -2,37 +2,38 @@
 
 import { useState, useEffect } from 'react';
 import { User } from '@/lib/types';
-import { storageUtils } from '@/lib/storage';
+import { apiCreate, apiDelete, apiList, apiUpdate } from '@/lib/api';
 
 export function useUsers() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setUsers(storageUtils.getUsers());
-    setLoading(false);
+    apiList<User>('users')
+      .then(setUsers)
+      .catch(() => setUsers([]))
+      .finally(() => setLoading(false));
   }, []);
 
-  const addUser = (userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newUser = storageUtils.addUser(userData);
-    setUsers(prev => [...prev, newUser]);
+  const addUser = async (userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newUser = await apiCreate<User>('users', userData);
+    setUsers(prev => [newUser, ...prev]);
     return newUser;
   };
 
-  const updateUser = (id: string, updates: Partial<User>) => {
-    const updatedUser = storageUtils.updateUser(id, updates);
-    if (updatedUser) {
-      setUsers(prev => prev.map(u => u.id === id ? updatedUser : u));
-    }
+  const updateUser = async (id: string, updates: Partial<User>) => {
+    const current = users.find(u => u.id === id);
+    if (!current) return null;
+    const { password: _password, ...merged } = { ...current, ...updates };
+    const updatedUser = await apiUpdate<User>('users', id, merged);
+    setUsers(prev => prev.map(u => u.id === id ? updatedUser : u));
     return updatedUser;
   };
 
-  const deleteUser = (id: string) => {
-    const success = storageUtils.deleteUser(id);
-    if (success) {
-      setUsers(prev => prev.filter(u => u.id !== id));
-    }
-    return success;
+  const deleteUser = async (id: string) => {
+    await apiDelete('users', id);
+    setUsers(prev => prev.filter(u => u.id !== id));
+    return true;
   };
 
   const getUser = (id: string) => {

@@ -1,4 +1,5 @@
 'use client';
+import { useLang } from '@/contexts/i18n-context';
 
 import { useMemo } from 'react';
 import { format, isToday, isTomorrow } from 'date-fns';
@@ -17,11 +18,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { StatsCard } from '@/components/stats-card';
+import { BcvRateCard } from '@/components/bcv-rate-card';
 import { usePatients } from '@/hooks/use-patients';
 import { useAppointments } from '@/hooks/use-appointments';
 import Link from 'next/link';
 
 export default function Dashboard() {
+  const { t } = useLang();
   const { patients } = usePatients();
   const { appointments } = useAppointments();
 
@@ -62,7 +65,7 @@ export default function Dashboard() {
       case 'cancelled':
         return <XCircle className="h-4 w-4 text-red-600" />;
       case 'confirmed':
-        return <Clock className="h-4 w-4 text-blue-600" />;
+        return <Clock className="h-4 w-4 text-teal-600" />;
       default:
         return <AlertCircle className="h-4 w-4 text-amber-600" />;
     }
@@ -87,6 +90,7 @@ export default function Dashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <BcvRateCard />
         <StatsCard
           title="Total Pacientes"
           value={stats.totalPatients}
@@ -129,7 +133,7 @@ export default function Dashboard() {
               {upcomingAppointments.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p>No hay citas programadas</p>
+                  <p>{t('No hay citas programadas')}</p>
                   <Link href="/appointments/new">
                     <Button className="mt-4">
                       Programar Nueva Cita
@@ -208,7 +212,7 @@ export default function Dashboard() {
             <CardContent>
               <div className="space-y-3">
                 <div className="flex items-center space-x-3 text-sm">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
                   <span className="text-gray-600">
                     Sistema iniciado correctamente
                   </span>

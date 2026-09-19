@@ -1,11 +1,13 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Figtree } from 'next/font/google';
+import { Toaster } from 'sonner';
 import { AuthProvider } from '@/contexts/auth-context';
+import { I18nProvider } from '@/contexts/i18n-context';
 import { ProtectedRoute } from '@/components/protected-route';
 import { Navigation } from '@/components/navigation';
 
-const inter = Inter({ subsets: ['latin'] });
+const figtree = Figtree({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'MediControl - Sistema de Gestión de Citas Médicas',
@@ -19,17 +21,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className={inter.className}>
+      <body className={figtree.className}>
         <AuthProvider>
-          <ProtectedRoute>
+          <I18nProvider>
+            <ProtectedRoute>
             <div className="min-h-screen bg-gray-50">
               <Navigation />
               <main className="py-8">
                 {children}
               </main>
             </div>
-          </ProtectedRoute>
+            </ProtectedRoute>
+          </I18nProvider>
         </AuthProvider>
+        <Toaster richColors position="top-right" closeButton />
       </body>
     </html>
   );

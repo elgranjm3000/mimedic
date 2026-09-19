@@ -1,4 +1,5 @@
 'use client';
+import { useLang } from '@/contexts/i18n-context';
 
 import { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
@@ -8,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PatientCombobox } from '@/components/patient-combobox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2 } from 'lucide-react';
 import { usePatients } from '@/hooks/use-patients';
@@ -21,6 +23,7 @@ interface PrescriptionFormProps {
 }
 
 export function PrescriptionForm({ prescription, onSubmit, onCancel }: PrescriptionFormProps) {
+  const { t } = useLang();
   const [loading, setLoading] = useState(false);
   const { patients } = usePatients();
   const { getDoctors } = useUsers();
@@ -82,19 +85,12 @@ export function PrescriptionForm({ prescription, onSubmit, onCancel }: Prescript
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="patientId">Paciente</Label>
-              <Select onValueChange={(value) => setValue('patientId', value)} defaultValue={prescription?.patientId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar paciente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {patients.map((patient) => (
-                    <SelectItem key={patient.id} value={patient.id}>
-                      {patient.firstName} {patient.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="patientId">{t('Paciente')}</Label>
+              <PatientCombobox
+              patients={patients}
+              value={selectedPatientId || ''}
+              onValueChange={(value) => setValue('patientId', value)}
+            />
               {errors.patientId && (
                 <p className="text-sm text-red-600 mt-1">Debe seleccionar un paciente</p>
               )}
@@ -125,7 +121,7 @@ export function PrescriptionForm({ prescription, onSubmit, onCancel }: Prescript
           </div>
 
           <div>
-            <Label htmlFor="diagnosis">Diagnóstico</Label>
+            <Label htmlFor="diagnosis">{t('Diagnóstico')}</Label>
             <Input
               id="diagnosis"
               {...register('diagnosis', { required: 'El diagnóstico es requerido' })}
@@ -173,7 +169,7 @@ export function PrescriptionForm({ prescription, onSubmit, onCancel }: Prescript
                     </div>
                     
                     <div>
-                      <Label htmlFor={`medications.${index}.dosage`}>Dosis</Label>
+                      <Label htmlFor={`medications.${index}.dosage`}>{t('Dosis')}</Label>
                       <Input
                         {...register(`medications.${index}.dosage`, { required: 'La dosis es requerida' })}
                         placeholder="ej: 500mg"
@@ -181,7 +177,7 @@ export function PrescriptionForm({ prescription, onSubmit, onCancel }: Prescript
                     </div>
                     
                     <div>
-                      <Label htmlFor={`medications.${index}.frequency`}>Frecuencia</Label>
+                      <Label htmlFor={`medications.${index}.frequency`}>{t('Frecuencia')}</Label>
                       <Input
                         {...register(`medications.${index}.frequency`, { required: 'La frecuencia es requerida' })}
                         placeholder="ej: Cada 8 horas"
@@ -189,7 +185,7 @@ export function PrescriptionForm({ prescription, onSubmit, onCancel }: Prescript
                     </div>
                     
                     <div>
-                      <Label htmlFor={`medications.${index}.duration`}>Duración</Label>
+                      <Label htmlFor={`medications.${index}.duration`}>{t('Duración')}</Label>
                       <Input
                         {...register(`medications.${index}.duration`, { required: 'La duración es requerida' })}
                         placeholder="ej: 7 días"
@@ -231,9 +227,9 @@ export function PrescriptionForm({ prescription, onSubmit, onCancel }: Prescript
                   <SelectValue placeholder="Estado de la prescripción" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Activa</SelectItem>
-                  <SelectItem value="completed">Completada</SelectItem>
-                  <SelectItem value="cancelled">Cancelada</SelectItem>
+                  <SelectItem value="active">{t('Activa')}</SelectItem>
+                  <SelectItem value="completed">{t('Completada')}</SelectItem>
+                  <SelectItem value="cancelled">{t('Cancelada')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

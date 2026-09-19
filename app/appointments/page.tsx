@@ -1,5 +1,7 @@
 'use client';
+import { useLang } from '@/contexts/i18n-context';
 
+import { toast } from 'sonner';
 import { useState } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -23,7 +25,7 @@ import { useAppointments } from '@/hooks/use-appointments';
 
 const statusColors = {
   scheduled: 'bg-amber-100 text-amber-800',
-  confirmed: 'bg-blue-100 text-blue-800',
+  confirmed: 'bg-teal-100 text-teal-800',
   completed: 'bg-emerald-100 text-emerald-800',
   cancelled: 'bg-red-100 text-red-800',
 };
@@ -43,6 +45,7 @@ const typeLabels = {
 };
 
 export default function AppointmentsPage() {
+  const { t } = useLang();
   const { appointments, loading, deleteAppointment } = useAppointments();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -65,7 +68,9 @@ export default function AppointmentsPage() {
 
   const handleDeleteAppointment = (id: string) => {
     if (confirm('¿Está seguro de que desea eliminar esta cita?')) {
-      deleteAppointment(id);
+      deleteAppointment(id)
+        .then(() => toast.success(t('Cita eliminada correctamente')))
+        .catch(() => toast.error(t('No se pudo eliminar. Intentá de nuevo.')));
     }
   };
 
@@ -90,7 +95,7 @@ export default function AppointmentsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-            <Calendar className="h-8 w-8 text-blue-600" />
+            <Calendar className="h-8 w-8 text-teal-600" />
             Citas Médicas
           </h1>
           <p className="text-gray-600 mt-1">
@@ -112,7 +117,7 @@ export default function AppointmentsPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Buscar por paciente o notas..."
+                placeholder={t('Buscar por paciente o notas...')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -124,11 +129,11 @@ export default function AppointmentsPage() {
                 <SelectValue placeholder="Filtrar por estado" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los estados</SelectItem>
-                <SelectItem value="scheduled">Programada</SelectItem>
-                <SelectItem value="confirmed">Confirmada</SelectItem>
-                <SelectItem value="completed">Completada</SelectItem>
-                <SelectItem value="cancelled">Cancelada</SelectItem>
+                <SelectItem value="all">{t('Todos los estados')}</SelectItem>
+                <SelectItem value="scheduled">{t('Programada')}</SelectItem>
+                <SelectItem value="confirmed">{t('Confirmada')}</SelectItem>
+                <SelectItem value="completed">{t('Completada')}</SelectItem>
+                <SelectItem value="cancelled">{t('Cancelada')}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -137,11 +142,11 @@ export default function AppointmentsPage() {
                 <SelectValue placeholder="Filtrar por tipo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los tipos</SelectItem>
-                <SelectItem value="consultation">Consulta</SelectItem>
-                <SelectItem value="checkup">Chequeo</SelectItem>
-                <SelectItem value="procedure">Procedimiento</SelectItem>
-                <SelectItem value="follow-up">Seguimiento</SelectItem>
+                <SelectItem value="all">{t('Todos los tipos')}</SelectItem>
+                <SelectItem value="consultation">{t('Consulta')}</SelectItem>
+                <SelectItem value="checkup">{t('Chequeo')}</SelectItem>
+                <SelectItem value="procedure">{t('Procedimiento')}</SelectItem>
+                <SelectItem value="follow-up">{t('Seguimiento')}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -196,8 +201,8 @@ export default function AppointmentsPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
-                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <Calendar className="h-6 w-6 text-blue-600" />
+                      <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+                        <Calendar className="h-6 w-6 text-teal-600" />
                       </div>
                     </div>
                     
@@ -214,7 +219,7 @@ export default function AppointmentsPage() {
                         </Badge>
                       </div>
                       
-                      <div className="flex items-center space-x-6 text-sm text-gray-600">
+                      <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-gray-600">
                         <div className="flex items-center space-x-1">
                           <Calendar className="h-4 w-4" />
                           <span>

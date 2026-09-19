@@ -2,37 +2,37 @@
 
 import { useState, useEffect } from 'react';
 import { Appointment } from '@/lib/types';
-import { storageUtils } from '@/lib/storage';
+import { apiCreate, apiDelete, apiList, apiUpdate } from '@/lib/api';
 
 export function useAppointments() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setAppointments(storageUtils.getAppointments());
-    setLoading(false);
+    apiList<Appointment>('appointments')
+      .then(setAppointments)
+      .catch(() => setAppointments([]))
+      .finally(() => setLoading(false));
   }, []);
 
-  const addAppointment = (appointmentData: Omit<Appointment, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newAppointment = storageUtils.addAppointment(appointmentData);
-    setAppointments(prev => [...prev, newAppointment]);
+  const addAppointment = async (appointmentData: Omit<Appointment, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newAppointment = await apiCreate<Appointment>('appointments', appointmentData);
+    setAppointments(prev => [newAppointment, ...prev]);
     return newAppointment;
   };
 
-  const updateAppointment = (id: string, updates: Partial<Appointment>) => {
-    const updatedAppointment = storageUtils.updateAppointment(id, updates);
-    if (updatedAppointment) {
-      setAppointments(prev => prev.map(a => a.id === id ? updatedAppointment : a));
-    }
+  const updateAppointment = async (id: string, updates: Partial<Appointment>) => {
+    const current = appointments.find(a => a.id === id);
+    if (!current) return null;
+    const updatedAppointment = await apiUpdate<Appointment>('appointments', id, { ...current, ...updates });
+    setAppointments(prev => prev.map(a => a.id === id ? updatedAppointment : a));
     return updatedAppointment;
   };
 
-  const deleteAppointment = (id: string) => {
-    const success = storageUtils.deleteAppointment(id);
-    if (success) {
-      setAppointments(prev => prev.filter(a => a.id !== id));
-    }
-    return success;
+  const deleteAppointment = async (id: string) => {
+    await apiDelete('appointments', id);
+    setAppointments(prev => prev.filter(a => a.id !== id));
+    return true;
   };
 
   const getAppointment = (id: string) => {

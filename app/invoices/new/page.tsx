@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { InvoiceForm } from '@/components/invoice-form';
 import { useInvoices } from '@/hooks/use-invoices';
 
@@ -8,9 +9,14 @@ export default function NewInvoicePage() {
   const router = useRouter();
   const { addInvoice } = useInvoices();
 
-  const handleSubmit = (invoiceData: any) => {
-    addInvoice(invoiceData);
-    router.push('/invoices');
+  const handleSubmit = async (invoiceData: any) => {
+    try {
+      await addInvoice(invoiceData);
+      toast.success('Factura creada correctamente');
+      router.push('/invoices');
+    } catch {
+      toast.error('No se pudo guardar. Intentá de nuevo.');
+    }
   };
 
   const handleCancel = () => {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { UserForm } from '@/components/user-form';
 import { useUsers } from '@/hooks/use-users';
 
@@ -8,9 +9,14 @@ export default function NewUserPage() {
   const router = useRouter();
   const { addUser } = useUsers();
 
-  const handleSubmit = (userData: any) => {
-    addUser(userData);
-    router.push('/users');
+  const handleSubmit = async (userData: any) => {
+    try {
+      await addUser(userData);
+      toast.success('Usuario creado correctamente');
+      router.push('/users');
+    } catch {
+      toast.error('No se pudo guardar. Intentá de nuevo.');
+    }
   };
 
   const handleCancel = () => {

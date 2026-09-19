@@ -1,4 +1,5 @@
 'use client';
+import { useLang } from '@/contexts/i18n-context';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -21,14 +22,16 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUsers } from '@/hooks/use-users';
 
-const roleColors = {
+const roleColors: Record<string, string> = {
+  super_admin: 'bg-slate-800 text-white',
   admin: 'bg-purple-100 text-purple-800',
-  doctor: 'bg-blue-100 text-blue-800',
+  doctor: 'bg-teal-100 text-teal-800',
   nurse: 'bg-emerald-100 text-emerald-800',
   receptionist: 'bg-amber-100 text-amber-800',
 };
 
-const roleLabels = {
+const roleLabels: Record<string, string> = {
+  super_admin: 'Super Admin',
   admin: 'Administrador',
   doctor: 'Doctor',
   nurse: 'Enfermera',
@@ -36,6 +39,7 @@ const roleLabels = {
 };
 
 export default function UsersPage() {
+  const { t } = useLang();
   const { users, loading, deleteUser } = useUsers();
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -83,7 +87,7 @@ export default function UsersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-            <Settings className="h-8 w-8 text-blue-600" />
+            <Settings className="h-8 w-8 text-teal-600" />
             Gestión de Usuarios
           </h1>
           <p className="text-gray-600 mt-1">
@@ -105,7 +109,7 @@ export default function UsersPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Buscar por nombre o email..."
+                placeholder={t('Buscar por nombre o email...')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -117,7 +121,8 @@ export default function UsersPage() {
                 <SelectValue placeholder="Filtrar por rol" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los roles</SelectItem>
+                <SelectItem value="all">{t('Todos los roles')}</SelectItem>
+                <SelectItem value="super_admin">Super Admin</SelectItem>
                 <SelectItem value="admin">Administrador</SelectItem>
                 <SelectItem value="doctor">Doctor</SelectItem>
                 <SelectItem value="nurse">Enfermera</SelectItem>
@@ -130,7 +135,7 @@ export default function UsersPage() {
                 <SelectValue placeholder="Filtrar por estado" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los estados</SelectItem>
+                <SelectItem value="all">{t('Todos los estados')}</SelectItem>
                 <SelectItem value="active">Activos</SelectItem>
                 <SelectItem value="inactive">Inactivos</SelectItem>
               </SelectContent>
@@ -225,7 +230,7 @@ export default function UsersPage() {
                   </div>
                   <div className="flex items-center text-sm text-gray-600">
                     <Shield className="h-4 w-4 mr-2" />
-                    <span>Rol: {roleLabels[user.role]}</span>
+                    <span>{t('Rol: ')}{roleLabels[user.role]}</span>
                   </div>
                 </div>
 

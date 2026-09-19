@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { AppointmentForm } from '@/components/appointment-form';
 import { useAppointments } from '@/hooks/use-appointments';
 
@@ -8,9 +9,14 @@ export default function NewAppointmentPage() {
   const router = useRouter();
   const { addAppointment } = useAppointments();
 
-  const handleSubmit = (appointmentData: any) => {
-    addAppointment(appointmentData);
-    router.push('/appointments');
+  const handleSubmit = async (appointmentData: any) => {
+    try {
+      await addAppointment(appointmentData);
+      toast.success('Cita creada correctamente');
+      router.push('/appointments');
+    } catch {
+      toast.error('No se pudo guardar. Intentá de nuevo.');
+    }
   };
 
   const handleCancel = () => {

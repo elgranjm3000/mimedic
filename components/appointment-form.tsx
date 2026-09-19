@@ -1,4 +1,5 @@
 'use client';
+import { useLang } from '@/contexts/i18n-context';
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -8,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PatientCombobox } from '@/components/patient-combobox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePatients } from '@/hooks/use-patients';
 import { useUsers } from '@/hooks/use-users';
@@ -34,6 +36,7 @@ const timeSlots = [
 ];
 
 export function AppointmentForm({ appointment, onSubmit, onCancel }: AppointmentFormProps) {
+  const { t } = useLang();
   const [loading, setLoading] = useState(false);
   const { patients } = usePatients();
   const { getDoctors } = useUsers();
@@ -88,19 +91,12 @@ export function AppointmentForm({ appointment, onSubmit, onCancel }: Appointment
       <CardContent>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
           <div>
-            <Label htmlFor="patientId">Paciente</Label>
-            <Select onValueChange={(value) => setValue('patientId', value)} defaultValue={appointment?.patientId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar paciente" />
-              </SelectTrigger>
-              <SelectContent>
-                {patients.map((patient) => (
-                  <SelectItem key={patient.id} value={patient.id}>
-                    {patient.firstName} {patient.lastName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="patientId">{t('Paciente')}</Label>
+            <PatientCombobox
+              patients={patients}
+              value={selectedPatientId || ''}
+              onValueChange={(value) => setValue('patientId', value)}
+            />
             {errors.patientId && (
               <p className="text-sm text-red-600 mt-1">Debe seleccionar un paciente</p>
             )}
@@ -203,10 +199,10 @@ export function AppointmentForm({ appointment, onSubmit, onCancel }: Appointment
                   <SelectValue placeholder="Estado de la cita" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="scheduled">Programada</SelectItem>
-                  <SelectItem value="confirmed">Confirmada</SelectItem>
-                  <SelectItem value="completed">Completada</SelectItem>
-                  <SelectItem value="cancelled">Cancelada</SelectItem>
+                  <SelectItem value="scheduled">{t('Programada')}</SelectItem>
+                  <SelectItem value="confirmed">{t('Confirmada')}</SelectItem>
+                  <SelectItem value="completed">{t('Completada')}</SelectItem>
+                  <SelectItem value="cancelled">{t('Cancelada')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

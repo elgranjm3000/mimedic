@@ -1,22 +1,34 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { 
-  Calendar, 
-  Users, 
-  ClipboardList, 
+import {
+  Calendar,
+  Users,
+  ClipboardList,
   Home,
   Stethoscope,
   FileText,
   CreditCard,
   BarChart3,
   Settings,
-  LogOut
+  LogOut,
+  Menu,
+  Hospital,
+  User as UserIcon,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
+import { useLang } from '@/contexts/i18n-context';
 import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,153 +41,243 @@ import {
 const navItems = [
   {
     href: '/',
-    label: 'Dashboard',
+    label: 'nav.dashboard',
     icon: Home,
     roles: ['admin', 'doctor', 'nurse', 'receptionist'],
   },
   {
     href: '/patients',
-    label: 'Pacientes',
+    label: 'nav.patients',
     icon: Users,
     roles: ['admin', 'doctor', 'nurse', 'receptionist'],
   },
   {
     href: '/appointments',
-    label: 'Citas',
+    label: 'nav.appointments',
     icon: ClipboardList,
     roles: ['admin', 'doctor', 'nurse', 'receptionist'],
   },
   {
     href: '/calendar',
-    label: 'Calendario',
+    label: 'nav.calendar',
     icon: Calendar,
     roles: ['admin', 'doctor', 'nurse', 'receptionist'],
   },
   {
     href: '/prescriptions',
-    label: 'Prescripciones',
+    label: 'nav.prescriptions',
     icon: FileText,
     roles: ['admin', 'doctor'],
   },
   {
     href: '/invoices',
-    label: 'Facturación',
+    label: 'nav.invoices',
     icon: CreditCard,
     roles: ['admin', 'receptionist'],
   },
   {
     href: '/reports',
-    label: 'Reportes',
+    label: 'nav.reports',
     icon: BarChart3,
-    roles: ['admin'],
+    roles: ['admin', 'super_admin'],
   },
   {
     href: '/users',
-    label: 'Usuarios',
+    label: 'nav.users',
     icon: Settings,
-    roles: ['admin'],
+    roles: ['admin', 'super_admin'],
+  },
+  {
+    href: '/organizations',
+    label: 'nav.organizations',
+    icon: Hospital,
+    roles: ['super_admin'],
   },
 ];
 
-const roleLabels = {
-  admin: 'Administrador',
-  doctor: 'Doctor',
-  nurse: 'Enfermera',
-  receptionist: 'Recepcionista',
-};
+function UserAvatar({ user, size = 'sm' }: { user: NonNullable<ReturnType<typeof useAuth>['user']>; size?: 'sm' | 'md' }) {
+  const dimension = size === 'sm' ? 'w-8 h-8' : 'w-9 h-9';
+
+  if (user.avatar) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={user.avatar}
+        alt={`${user.firstName} ${user.lastName}`}
+        className={cn(dimension, 'rounded-full object-cover ring-1 ring-black/10 shrink-0')}
+      />
+    );
+  }
+  return (
+    <div className={cn(dimension, 'bg-teal-100 rounded-full flex items-center justify-center shrink-0')}>
+      <span className="text-sm font-medium text-teal-700">
+        {user.firstName[0]}{user.lastName[0]}
+      </span>
+    </div>
+  );
+}
 
 export function Navigation() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { lang, setLang, t } = useLang();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   if (!user) return null;
 
   const allowedNavItems = navItems.filter(item => item.roles.includes(user.role));
 
+  const navLinkClasses = (isActive: boolean) =>
+    cn(
+      'flex items-center gap-2 rounded-md text-sm font-medium transition-colors',
+      isActive
+        ? 'text-teal-600 bg-teal-50'
+        : 'text-gray-600 hover:text-teal-600 hover:bg-gray-50'
+    );
+
+  const closeAndNavigate = () => setMobileOpen(false);
+
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center space-x-2">
-            <Stethoscope className="h-8 w-8 text-blue-600" />
+        <div className="flex items-center justify-between h-16 gap-2">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 shrink-0">
+            <Stethoscope className="h-8 w-8 text-teal-600" />
             <span className="text-xl font-bold text-gray-900">MediControl</span>
           </Link>
-          
-          <div className="hidden md:flex items-center space-x-8">
+
+          {/* Desktop nav (xl+) */}
+          <div className="hidden xl:flex items-center gap-1">
             {allowedNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
-              
+
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={cn(
-                    'flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                    isActive
-                      ? 'text-blue-600 bg-blue-50'
-                      : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
-                  )}
+                  className={cn(navLinkClasses(isActive), 'px-3 py-2')}
                 >
-                  <Icon className="h-4 w-4" />
-                  <span>{item.label}</span>
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span>{t(item.label)}</span>
                 </Link>
               );
             })}
           </div>
 
-          {/* User Menu */}
-          <div className="flex items-center space-x-4">
+          {/* User menu */}
+          <div className="flex items-center gap-1 shrink-0">
+            {/* Idioma */}
+            <div className="hidden md:flex items-center rounded-md border border-gray-200 overflow-hidden" role="group" aria-label="Idioma / Language">
+              {(['es', 'en'] as const).map((l) => (
+                <button
+                  key={l}
+                  type="button"
+                  onClick={() => setLang(l)}
+                  className={cn(
+                    'px-2 py-1.5 text-xs font-semibold uppercase transition-colors min-h-[32px]',
+                    lang === l ? 'bg-teal-600 text-white' : 'text-gray-500 hover:bg-gray-50'
+                  )}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-medium text-blue-600">
-                      {user.firstName[0]}{user.lastName[0]}
-                    </span>
-                  </div>
+                <Button variant="ghost" className="flex items-center gap-2 min-h-[40px]">
+                  <UserAvatar user={user} />
                   <div className="hidden md:block text-left">
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-gray-900 leading-tight">
                       {user.firstName} {user.lastName}
                     </p>
-                    <p className="text-xs text-gray-500">
-                      {roleLabels[user.role]}
+                    <p className="text-xs text-gray-500 leading-tight">
+                      {t('role.' + user.role)}
                     </p>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+                <DropdownMenuLabel>{t("nav.myAccount")}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/perfil">
+                    <UserIcon className="mr-2 h-4 w-4" />
+                    <span>{t("nav.myProfile")}</span>
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Cerrar Sesión</span>
+                  <span>{t("nav.logout")}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
 
-          {/* Mobile menu */}
-          <div className="md:hidden flex items-center space-x-2">
-            {allowedNavItems.slice(0, 4).map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-              
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    'p-2 rounded-md transition-colors',
-                    isActive
-                      ? 'text-blue-600 bg-blue-50'
-                      : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
-                  )}
+            {/* Mobile / tablet hamburger */}
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="xl:hidden min-h-[40px] min-w-[40px]"
+                  aria-label={t("nav.openMenu")}
                 >
-                  <Icon className="h-5 w-5" />
-                </Link>
-              );
-            })}
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72 p-0">
+                <SheetHeader className="px-4 py-4 border-b border-gray-100">
+                  <SheetTitle className="flex items-center gap-2 text-base">
+                    <Stethoscope className="h-5 w-5 text-teal-600" />
+                    MediControl
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-col h-[calc(100%-5rem)]">
+                  <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+                    {allowedNavItems.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = pathname === item.href;
+
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={closeAndNavigate}
+                          className={cn(navLinkClasses(isActive), 'px-3 py-2.5 text-base min-h-[44px]')}
+                        >
+                          <Icon className="h-5 w-5 shrink-0" />
+                          <span>{t(item.label)}</span>
+                        </Link>
+                      );
+                    })}
+                  </nav>
+                  <div className="p-3 border-t border-gray-100">
+                    <div className="flex items-center gap-3 px-3 py-2">
+                      <UserAvatar user={user} size="md" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {user.firstName} {user.lastName}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {t('role.' + user.role)}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      onClick={logout}
+                      className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 min-h-[44px]"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Cerrar Sesión
+                    </Button>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>

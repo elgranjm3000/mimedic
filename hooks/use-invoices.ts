@@ -2,37 +2,37 @@
 
 import { useState, useEffect } from 'react';
 import { Invoice } from '@/lib/types';
-import { storageUtils } from '@/lib/storage';
+import { apiCreate, apiDelete, apiList, apiUpdate } from '@/lib/api';
 
 export function useInvoices() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setInvoices(storageUtils.getInvoices());
-    setLoading(false);
+    apiList<Invoice>('invoices')
+      .then(setInvoices)
+      .catch(() => setInvoices([]))
+      .finally(() => setLoading(false));
   }, []);
 
-  const addInvoice = (invoiceData: Omit<Invoice, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newInvoice = storageUtils.addInvoice(invoiceData);
-    setInvoices(prev => [...prev, newInvoice]);
+  const addInvoice = async (invoiceData: Omit<Invoice, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newInvoice = await apiCreate<Invoice>('invoices', invoiceData);
+    setInvoices(prev => [newInvoice, ...prev]);
     return newInvoice;
   };
 
-  const updateInvoice = (id: string, updates: Partial<Invoice>) => {
-    const updatedInvoice = storageUtils.updateInvoice(id, updates);
-    if (updatedInvoice) {
-      setInvoices(prev => prev.map(i => i.id === id ? updatedInvoice : i));
-    }
+  const updateInvoice = async (id: string, updates: Partial<Invoice>) => {
+    const current = invoices.find(i => i.id === id);
+    if (!current) return null;
+    const updatedInvoice = await apiUpdate<Invoice>('invoices', id, { ...current, ...updates });
+    setInvoices(prev => prev.map(i => i.id === id ? updatedInvoice : i));
     return updatedInvoice;
   };
 
-  const deleteInvoice = (id: string) => {
-    const success = storageUtils.deleteInvoice(id);
-    if (success) {
-      setInvoices(prev => prev.filter(i => i.id !== id));
-    }
-    return success;
+  const deleteInvoice = async (id: string) => {
+    await apiDelete('invoices', id);
+    setInvoices(prev => prev.filter(i => i.id !== id));
+    return true;
   };
 
   const getInvoice = (id: string) => {

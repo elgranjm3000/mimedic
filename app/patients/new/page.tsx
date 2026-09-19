@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { PatientForm } from '@/components/patient-form';
 import { usePatients } from '@/hooks/use-patients';
 
@@ -8,9 +9,14 @@ export default function NewPatientPage() {
   const router = useRouter();
   const { addPatient } = usePatients();
 
-  const handleSubmit = (patientData: any) => {
-    addPatient(patientData);
-    router.push('/patients');
+  const handleSubmit = async (patientData: any) => {
+    try {
+      await addPatient(patientData);
+      toast.success('Paciente creado correctamente');
+      router.push('/patients');
+    } catch {
+      toast.error('No se pudo guardar. Intentá de nuevo.');
+    }
   };
 
   const handleCancel = () => {

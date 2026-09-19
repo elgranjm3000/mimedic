@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Stethoscope, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
+import { useLang } from '@/contexts/i18n-context';
 
 interface LoginFormData {
   email: string;
@@ -20,6 +21,7 @@ export function LoginForm() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
+  const { lang, setLang, t } = useLang();
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
 
@@ -30,7 +32,7 @@ export function LoginForm() {
     try {
       const success = await login(data.email, data.password);
       if (!success) {
-        setError('Credenciales inválidas. Por favor, verifica tu email y contraseña.');
+        setError(t('login.invalid'));
       }
     } catch (err) {
       setError('Error al iniciar sesión. Por favor, intenta nuevamente.');
@@ -40,21 +42,36 @@ export function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-indigo-100 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md relative">
+        <div className="absolute top-4 right-4 flex items-center rounded-md border border-gray-200 overflow-hidden bg-white">
+          {(['es', 'en'] as const).map((l) => (
+            <button
+              key={l}
+              type="button"
+              onClick={() => setLang(l)}
+              className={`px-2.5 py-1 text-xs font-semibold uppercase transition-colors ${
+                lang === l ? 'bg-teal-600 text-white' : 'text-gray-500 hover:bg-gray-50'
+              }`}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="p-3 bg-blue-100 rounded-full">
-              <Stethoscope className="h-8 w-8 text-blue-600" />
+            <div className="p-3 bg-teal-100 rounded-full">
+              <Stethoscope className="h-8 w-8 text-teal-600" />
             </div>
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">MediControl</CardTitle>
-          <p className="text-gray-600">Inicia sesión en tu cuenta</p>
+          <p className="text-gray-600">{t('login.subtitle')}</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('login.email')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -73,7 +90,7 @@ export function LoginForm() {
             </div>
             
             <div>
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password">{t('login.password')}</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -107,7 +124,7 @@ export function LoginForm() {
             )}
 
             <Button type="submit" disabled={loading} className="w-full">
-              {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              {loading ? (lang === 'es' ? 'Iniciando sesión...' : 'Signing in...') : t('login.submit')}
             </Button>
           </form>
 

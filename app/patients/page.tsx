@@ -1,5 +1,7 @@
 'use client';
+import { useLang } from '@/contexts/i18n-context';
 
+import { toast } from 'sonner';
 import { useState } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -22,6 +24,7 @@ import { usePatients } from '@/hooks/use-patients';
 import { useAppointments } from '@/hooks/use-appointments';
 
 export default function PatientsPage() {
+  const { t } = useLang();
   const { patients, loading, deletePatient } = usePatients();
   const { getAppointmentsByPatient } = useAppointments();
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,7 +39,9 @@ export default function PatientsPage() {
 
   const handleDeletePatient = (id: string) => {
     if (confirm('¿Está seguro de que desea eliminar este paciente?')) {
-      deletePatient(id);
+      deletePatient(id)
+        .then(() => toast.success(t('Paciente eliminado junto con sus citas, recetas y facturas')))
+        .catch(() => toast.error(t('No se pudo eliminar. Intentá de nuevo.')));
     }
   };
 
@@ -69,7 +74,7 @@ export default function PatientsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-            <Users className="h-8 w-8 text-blue-600" />
+            <Users className="h-8 w-8 text-teal-600" />
             Pacientes
           </h1>
           <p className="text-gray-600 mt-1">

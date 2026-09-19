@@ -15,7 +15,7 @@ interface StatsCardProps {
 
 export function StatsCard({ title, value, icon: Icon, trend, color = 'blue' }: StatsCardProps) {
   const colorClasses = {
-    blue: 'text-blue-600 bg-blue-100',
+    blue: 'text-teal-600 bg-teal-100',
     emerald: 'text-emerald-600 bg-emerald-100',
     amber: 'text-amber-600 bg-amber-100',
     red: 'text-red-600 bg-red-100',

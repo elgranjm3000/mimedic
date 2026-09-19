@@ -1,10 +1,27 @@
+export type UserRole = 'super_admin' | 'admin' | 'doctor' | 'nurse' | 'receptionist';
+
+export type OrganizationType = 'hospital' | 'clinic' | 'private_doctor';
+
+export interface Organization {
+  id: string;
+  name: string;
+  type: OrganizationType;
+  currency?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface User {
   id: string;
   email: string;
-  password: string; // In production, this would be hashed
+  password?: string;
   firstName: string;
   lastName: string;
-  role: 'admin' | 'doctor' | 'nurse' | 'receptionist';
+  role: UserRole;
+  organizationId?: string | null;
+  avatar?: string | null;
+  signature?: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -12,6 +29,7 @@ export interface User {
 
 export interface Patient {
   id: string;
+  organizationId?: string | null;
   firstName: string;
   lastName: string;
   email: string;
@@ -32,6 +50,7 @@ export interface Patient {
 
 export interface Appointment {
   id: string;
+  organizationId?: string | null;
   patientId: string;
   patientName: string;
   doctorId: string;
@@ -48,6 +67,7 @@ export interface Appointment {
 
 export interface Prescription {
   id: string;
+  organizationId?: string | null;
   patientId: string;
   patientName: string;
   doctorId: string;
@@ -72,6 +92,7 @@ export interface Medication {
 
 export interface Invoice {
   id: string;
+  organizationId?: string | null;
   patientId: string;
   patientName: string;
   appointmentId?: string;
@@ -106,4 +127,5 @@ export interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
+  updateUserState: (user: User) => void;
 }

@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthContextType } from '@/lib/types';
-import { storageUtils } from '@/lib/storage';
+
+const CURRENT_USER_KEY = 'medical_current_user';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -11,33 +12,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initialize storage and check for existing user
-    storageUtils.initialize();
-    const currentUser = storageUtils.getCurrentUser();
-    setUser(currentUser);
+    const data = localStorage.getItem(CURRENT_USER_KEY);
+    setUser(data ? JSON.parse(data) : null);
     setLoading(false);
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    const users = storageUtils.getUsers();
-    const foundUser = users.find(u => u.email === email && u.password === password && u.isActive);
-    
-    if (foundUser) {
-      setUser(foundUser);
-      storageUtils.setCurrentUser(foundUser);
-      return true;
-    }
-    
-    return false;
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) return false;
+    const foundUser: User = await res.json();
+    setUser(foundUser);
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(foundUser));
+    return true;
   };
 
   const logout = () => {
     setUser(null);
-    storageUtils.setCurrentUser(null);
+    localStorage.removeItem(CURRENT_USER_KEY);
+  };
+
+  const updateUserState = (updated: User) => {
+    setUser(updated);
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updated));
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, updateUserState }}>
       {children}
     </AuthContext.Provider>
   );
