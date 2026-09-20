@@ -11,6 +11,10 @@ export interface EntityConfig {
   booleanFields?: string[];
   /** si la tabla es multi-tenant, la columna organizationId debe estar en columns */
   tenant?: boolean;
+  /** Lógica posterior a la creación (p. ej. descontar inventario). */
+  afterCreate?: (data: Record<string, unknown>, requester: Requester) => Promise<unknown[]>;
+  /** Lógica posterior a la actualización; prev es la fila antes del cambio. */
+  afterUpdate?: (id: string, data: Record<string, unknown>, prev: Record<string, unknown>, requester: Requester) => Promise<unknown[]>;
 }
 
 export interface Requester {
@@ -172,7 +176,17 @@ export function makeCollectionHandlers(config: EntityConfig) {
     const placeholders = Object.keys(row).map(() => '?').join(', ');
     await db.execute({ sql: `INSERT INTO "${config.table}" (${names}) VALUES (${placeholders})`, args: Object.values(row) });
     await logOp(requester, request, 'create', config, data.id as string);
-    return NextResponse.json(deserialize(config, data), { status: 201 });
+    let warnings: unknown[] = [];
+    if (config.afterCreate) {
+      try {
+        warnings = (await config.afterCreate(data, requester)) ?? [];
+      } catch (e) {
+        console.error(`afterCreate ${config.table}:`, e);
+      }
+    }
+    const resBody = deserialize(config, data) as Record<string, unknown>;
+    if (warnings.length > 0) resBody._warnings = warnings;
+    return NextResponse.json(resBody, { status: 201 });
   };
 
   return { GET, POST };
@@ -210,7 +224,7 @@ export function makeItemHandlers(config: EntityConfig) {
 
     // Verificar que el registro pertenece a la organización del usuario
     const existing = await db.execute({
-      sql: `SELECT ${config.tenant ? '"organizationId"' : 'id'} FROM "${config.table}" WHERE id = ?`,
+      sql: `SELECT ${cols} FROM "${config.table}" WHERE id = ?`,
       args: [params.id],
     });
     if (existing.rows.length === 0) {
@@ -237,11 +251,21 @@ export function makeItemHandlers(config: EntityConfig) {
       args,
     });
     await logOp(requester, request, 'update', config, params.id);
+    let warnings: unknown[] = [];
+    if (config.afterUpdate) {
+      try {
+        warnings = (await config.afterUpdate(params.id, data, existing.rows[0] as unknown as Record<string, unknown>, requester)) ?? [];
+      } catch (e) {
+        console.error(`afterUpdate ${config.table}:`, e);
+      }
+    }
     const updated = await db.execute({
       sql: `SELECT ${cols} FROM "${config.table}" WHERE id = ?`,
       args: [params.id],
     });
-    return NextResponse.json(deserialize(config, updated.rows[0] as unknown as Record<string, unknown>));
+    const resBody = deserialize(config, updated.rows[0] as unknown as Record<string, unknown>) as Record<string, unknown>;
+    if (warnings.length > 0) resBody._warnings = warnings;
+    return NextResponse.json(resBody);
   };
 
   const DELETE = async (request: Request, { params }: { params: { id: string } }) => {
@@ -281,6 +305,14 @@ export const appointmentsConfig: EntityConfig = {
   columns: ['id', 'organizationId', 'patientId', 'patientName', 'doctorId', 'doctorName', 'date', 'time', 'duration', 'type', 'status', 'notes', 'createdAt', 'updatedAt'],
   numberFields: ['duration'],
   tenant: true,
+  // Al completar una cita se descuentan los consumibles de consulta del inventario
+  afterUpdate: async (id, data, prev) => {
+    if (data.status !== 'completed' || prev.status === 'completed') return [];
+    const orgId = data.organizationId as string | null ?? prev.organizationId as string | null;
+    if (!orgId) return [];
+    const { deductConsultConsumables } = await import('./inventory-deduct');
+    return deductConsultConsumables(orgId, `Consulta ${String(id).slice(0, 8)}`, 'Sistema (cita completada)');
+  },
 };
 
 export const prescriptionsConfig: EntityConfig = {
@@ -288,6 +320,21 @@ export const prescriptionsConfig: EntityConfig = {
   columns: ['id', 'organizationId', 'patientId', 'patientName', 'doctorId', 'doctorName', 'appointmentId', 'recordId', 'medications', 'diagnosis', 'instructions', 'status', 'createdAt', 'updatedAt'],
   jsonFields: ['medications'],
   tenant: true,
+  // Al crear una receta se descuentan los medicamentos que existan en inventario (por nombre)
+  afterCreate: async (data, requester) => {
+    const orgId = (data.organizationId ?? requester.organizationId) as string | null;
+    const meds = (data.medications ?? []) as { name?: string }[];
+    if (!orgId || !Array.isArray(meds)) return [];
+    const { deductByName } = await import('./inventory-deduct');
+    const warnings = [];
+    for (const med of meds) {
+      if (med?.name?.trim()) {
+        const warning = await deductByName(orgId, med.name.trim(), 1, `Despacho por receta ${String(data.id).slice(0, 8)}`, 'Sistema (receta)');
+        if (warning) warnings.push(warning);
+      }
+    }
+    return warnings;
+  },
 };
 
 export const invoicesConfig: EntityConfig = {
@@ -296,6 +343,39 @@ export const invoicesConfig: EntityConfig = {
   jsonFields: ['items'],
   numberFields: ['subtotal', 'tax', 'total'],
   tenant: true,
+  // Al marcar la factura como pagada: registra el cobro en caja y sella la fecha de pago
+  afterUpdate: async (id, data, prev, requester) => {
+    if (data.status !== 'paid' || prev.status === 'paid') return [];
+    const orgId = (data.organizationId ?? prev.organizationId ?? requester.organizationId) as string | null;
+    if (!orgId) return [];
+    const now = new Date().toISOString();
+    const method = ['efectivo', 'punto', 'transferencia', 'otro'].includes(String(data.paymentMethod ?? ''))
+      ? String(data.paymentMethod)
+      : 'efectivo';
+    if (!data.paidDate && !prev.paidDate) {
+      await db.execute({
+        sql: `UPDATE invoices SET "paidDate" = ? WHERE id = ?`,
+        args: [now, String(id)],
+      });
+    }
+    await db.execute({
+      sql: `INSERT INTO cash_entries (id, "organizationId", type, concept, amount, method, "patientId", "patientName", date, "registeredBy", "createdAt", "updatedAt")
+            VALUES (?, ?, 'ingreso', ?, ?, ?, ?, ?, ?, 'Sistema (factura)', ?, ?)`,
+      args: [
+        crypto.randomUUID(),
+        orgId,
+        `Cobro factura ${String(id).slice(0, 8).toUpperCase()} — ${data.patientName ?? prev.patientName ?? ''}`.trim(),
+        Number(data.total ?? prev.total ?? 0),
+        method,
+        (data.patientId ?? prev.patientId ?? null) as string | null,
+        (data.patientName ?? prev.patientName ?? null) as string | null,
+        now.slice(0, 10),
+        now,
+        now,
+      ],
+    });
+    return [];
+  },
 };
 
 export const usersConfig: EntityConfig = {
@@ -321,8 +401,9 @@ export const cashEntriesConfig: EntityConfig = {
 
 export const inventoryItemsConfig: EntityConfig = {
   table: 'inventory_items',
-  columns: ['id', 'organizationId', 'name', 'category', 'unit', 'stock', 'minStock', 'cost', 'supplier', 'createdAt', 'updatedAt'],
+  columns: ['id', 'organizationId', 'name', 'category', 'unit', 'stock', 'minStock', 'cost', 'supplier', 'deductOnConsult', 'createdAt', 'updatedAt'],
   numberFields: ['stock', 'minStock', 'cost'],
+  booleanFields: ['deductOnConsult'],
   tenant: true,
 };
 
@@ -330,6 +411,18 @@ export const stockMovementsConfig: EntityConfig = {
   table: 'stock_movements',
   columns: ['id', 'organizationId', 'itemId', 'itemName', 'type', 'quantity', 'reason', 'date', 'registeredBy', 'createdAt', 'updatedAt'],
   numberFields: ['quantity'],
+  tenant: true,
+};
+
+export const inventoryCategoriesConfig: EntityConfig = {
+  table: 'inventory_categories',
+  columns: ['id', 'organizationId', 'name', 'createdAt', 'updatedAt'],
+  tenant: true,
+};
+
+export const suppliersConfig: EntityConfig = {
+  table: 'suppliers',
+  columns: ['id', 'organizationId', 'name', 'phone', 'email', 'createdAt', 'updatedAt'],
   tenant: true,
 };
 

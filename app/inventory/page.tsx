@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useInventory } from '@/hooks/use-inventory';
+import { apiCreate, apiList } from '@/lib/api';
 import { useOrgSettings } from '@/hooks/use-org-settings';
 import { useAuth } from '@/contexts/auth-context';
 import { formatMoney } from '@/lib/format';
@@ -35,7 +36,21 @@ import { InventoryItem, StockMovementType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 const UNITS = ['unidad', 'caja', 'frasco', 'paquete', 'sobre', 'ampolla', 'rollo'];
+const NEW_CATEGORY = '__nueva__';
+const NEW_SUPPLIER = '__nuevo__';
 const todayStr = () => new Date().toISOString().split('T')[0];
+
+interface InventoryCategory {
+  id: string;
+  name: string;
+}
+
+interface Supplier {
+  id: string;
+  name: string;
+  phone?: string | null;
+  email?: string | null;
+}
 
 export default function InventoryPage() {
   const { user } = useAuth();
@@ -49,12 +64,18 @@ export default function InventoryPage() {
   const [itemDialog, setItemDialog] = useState(false);
   const [editing, setEditing] = useState<InventoryItem | null>(null);
   const [name, setName] = useState('');
+  const [categories, setCategories] = useState<InventoryCategory[]>([]);
   const [category, setCategory] = useState('');
+  const [newCategory, setNewCategory] = useState('');
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [supplier, setSupplier] = useState('');
+  const [newSupplierName, setNewSupplierName] = useState('');
+  const [newSupplierPhone, setNewSupplierPhone] = useState('');
+  const [deductOnConsult, setDeductOnConsult] = useState(false);
   const [unit, setUnit] = useState('unidad');
   const [stock, setStock] = useState('');
   const [minStock, setMinStock] = useState('');
   const [cost, setCost] = useState('');
-  const [supplier, setSupplier] = useState('');
 
   // dialog de movimiento
   const [moveDialog, setMoveDialog] = useState<InventoryItem | null>(null);
@@ -62,6 +83,35 @@ export default function InventoryPage() {
   const [moveQty, setMoveQty] = useState('');
   const [moveReason, setMoveReason] = useState('');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    apiList<InventoryCategory>('inventory-categories')
+      .then((list) => setCategories(list.sort((a, b) => a.name.localeCompare(b.name))))
+      .catch(() => {});
+    apiList<Supplier>('suppliers')
+      .then((list) => setSuppliers(list.sort((a, b) => a.name.localeCompare(b.name))))
+      .catch(() => {});
+  }, []);
+
+  const ensureCategory = async (name: string): Promise<string> => {
+    const existing = categories.find((c) => c.name.toLowerCase() === name.trim().toLowerCase());
+    if (existing) return existing.name;
+    const created = await apiCreate<InventoryCategory>('inventory-categories', { name: name.trim() });
+    setCategories((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+    return created.name;
+  };
+
+  const ensureSupplier = async (name: string): Promise<string> => {
+    const existing = suppliers.find((s) => s.name.toLowerCase() === name.trim().toLowerCase());
+    if (existing) return existing.name;
+    const created = await apiCreate<Supplier>('suppliers', {
+      name: name.trim(),
+      phone: newSupplierPhone.trim() || null,
+      email: null,
+    });
+    setSuppliers((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+    return created.name;
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -80,15 +130,15 @@ export default function InventoryPage() {
 
   const openNew = () => {
     setEditing(null);
-    setName(''); setCategory(''); setUnit('unidad'); setStock(''); setMinStock(''); setCost(''); setSupplier('');
+    setName(''); setCategory(''); setNewCategory(''); setSupplier(''); setNewSupplierName(''); setNewSupplierPhone(''); setDeductOnConsult(false); setUnit('unidad'); setStock(''); setMinStock(''); setCost('');
     setItemDialog(true);
   };
 
   const openEdit = (item: InventoryItem) => {
     setEditing(item);
-    setName(item.name); setCategory(item.category ?? ''); setUnit(item.unit);
+    setName(item.name); setCategory(item.category ?? ''); setNewCategory(''); setUnit(item.unit);
     setStock(String(item.stock)); setMinStock(String(item.minStock));
-    setCost(item.cost?.toString() ?? ''); setSupplier(item.supplier ?? '');
+    setCost(item.cost?.toString() ?? ''); setSupplier(item.supplier ?? ''); setNewSupplierName(''); setNewSupplierPhone(''); setDeductOnConsult(Boolean(item.deductOnConsult));
     setItemDialog(true);
   };
 
@@ -97,14 +147,41 @@ export default function InventoryPage() {
       toast.error('El nombre es obligatorio');
       return;
     }
+    let finalCategory = category;
+    if (category === NEW_CATEGORY) {
+      if (!newCategory.trim()) {
+        toast.error('Escribí el nombre de la nueva categoría');
+        return;
+      }
+      try {
+        finalCategory = await ensureCategory(newCategory);
+      } catch {
+        toast.error('No se pudo crear la categoría');
+        return;
+      }
+    }
+    let finalSupplier = supplier;
+    if (supplier === NEW_SUPPLIER) {
+      if (!newSupplierName.trim()) {
+        toast.error('Escribí el nombre del nuevo proveedor');
+        return;
+      }
+      try {
+        finalSupplier = await ensureSupplier(newSupplierName);
+      } catch {
+        toast.error('No se pudo crear el proveedor');
+        return;
+      }
+    }
     const data = {
       name: name.trim(),
-      category: category.trim() || undefined,
+      category: finalCategory || undefined,
       unit,
       stock: Number(stock) || 0,
       minStock: Number(minStock) || 0,
       cost: cost ? Number(cost) : null,
-      supplier: supplier.trim() || null,
+      supplier: finalSupplier || null,
+      deductOnConsult,
     };
     setSaving(true);
     try {
@@ -280,7 +357,14 @@ export default function InventoryPage() {
                     return (
                       <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
                         <td className="py-2.5 px-4">
-                          <p className="font-medium text-gray-900">{item.name}</p>
+                          <p className="font-medium text-gray-900">
+                            {item.name}
+                            {item.deductOnConsult && (
+                              <Badge variant="outline" className="ml-2 text-[10px] uppercase tracking-wide text-teal-700 border-teal-200">
+                                consulta
+                              </Badge>
+                            )}
+                          </p>
                           <p className="text-xs text-gray-500">{item.category || '—'}</p>
                         </td>
                         <td className="py-2.5 px-4">
@@ -375,8 +459,25 @@ export default function InventoryPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="i-cat">Categoría</Label>
-                <Input id="i-cat" placeholder="Ej: EPP, Inyección" value={category} onChange={(e) => setCategory(e.target.value)} />
+                <Label>Categoría</Label>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger><SelectValue placeholder="Seleccioná una categoría" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sin categoría</SelectItem>
+                    {categories.map((c) => (
+                      <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                    ))}
+                    <SelectItem value={NEW_CATEGORY}>+ Nueva categoría…</SelectItem>
+                  </SelectContent>
+                </Select>
+                {category === NEW_CATEGORY && (
+                  <Input
+                    autoFocus
+                    placeholder="Nombre de la nueva categoría"
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                  />
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Unidad</Label>
@@ -404,10 +505,50 @@ export default function InventoryPage() {
                 <Input id="i-cost" type="number" step="0.01" inputMode="decimal" value={cost} onChange={(e) => setCost(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="i-sup">Proveedor</Label>
-                <Input id="i-sup" value={supplier} onChange={(e) => setSupplier(e.target.value)} />
+                <Label>Proveedor</Label>
+                <Select value={supplier} onValueChange={setSupplier}>
+                  <SelectTrigger><SelectValue placeholder="Seleccioná un proveedor" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sin proveedor</SelectItem>
+                    {suppliers.map((s) => (
+                      <SelectItem key={s.id} value={s.name}>
+                        {s.name}{s.phone ? ` · ${s.phone}` : ''}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value={NEW_SUPPLIER}>+ Nuevo proveedor…</SelectItem>
+                  </SelectContent>
+                </Select>
+                {supplier === NEW_SUPPLIER && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      autoFocus
+                      placeholder="Nombre del proveedor"
+                      value={newSupplierName}
+                      onChange={(e) => setNewSupplierName(e.target.value)}
+                    />
+                    <Input
+                      placeholder="Teléfono (opcional)"
+                      value={newSupplierPhone}
+                      onChange={(e) => setNewSupplierPhone(e.target.value)}
+                    />
+                  </div>
+                )}
               </div>
             </div>
+            <label className="flex items-start gap-2.5 rounded-md border border-gray-200 p-3 cursor-pointer">
+              <input
+                type="checkbox"
+                className="mt-0.5 h-4 w-4 accent-teal-600"
+                checked={deductOnConsult}
+                onChange={(e) => setDeductOnConsult(e.target.checked)}
+              />
+              <span className="text-sm">
+                <span className="font-medium text-gray-900">Consumible de consulta</span>
+                <span className="block text-xs text-gray-500">
+                  Se descuenta 1 unidad automáticamente al completar una cita
+                </span>
+              </span>
+            </label>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setItemDialog(false)} disabled={saving}>Cancelar</Button>
               <Button onClick={handleSaveItem} disabled={saving}>Guardar</Button>

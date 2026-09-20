@@ -17,6 +17,7 @@ export async function POST(request: Request) {
   const body = await request.json();
 
   const { orgName, type, currency, adminFirstName, adminLastName, adminEmail, adminPassword } = body;
+  const logo = typeof body.logo === 'string' && body.logo.length <= 500_000 ? body.logo : null;
 
   if (!orgName || !adminFirstName || !adminLastName || !adminEmail || !adminPassword) {
     return NextResponse.json({ error: 'Todos los campos son obligatorios' }, { status: 400 });
@@ -45,9 +46,9 @@ export async function POST(request: Request) {
 
   await db.batch([
     {
-      sql: `INSERT INTO organizations (id, name, type, currency, "trialEndsAt", "isActive", "createdAt", "updatedAt")
-            VALUES (?, ?, ?, ?, ?, 1, ?, ?)`,
-      args: [orgId, orgName, type, currency ?? 'USD', trialEndsAt, nowIso, nowIso],
+      sql: `INSERT INTO organizations (id, name, type, currency, logo, "trialEndsAt", "isActive", "createdAt", "updatedAt")
+            VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+      args: [orgId, orgName, type, currency ?? 'USD', logo, trialEndsAt, nowIso, nowIso],
     },
     {
       sql: `INSERT INTO users (id, email, password_hash, "firstName", "lastName", role, "organizationId", "isActive", "createdAt", "updatedAt")

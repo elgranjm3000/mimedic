@@ -144,9 +144,21 @@ export function ensureDb(): Promise<void> {
       } catch {
         // la columna ya existe
       }
+      // Logo de la organización (data URL, en documentos impresos)
+      try {
+        await db.execute(`ALTER TABLE organizations ADD COLUMN logo TEXT`);
+      } catch {
+        // la columna ya existe
+      }
       // Último aviso de trial enviado (YYYY-MM-DD) para no duplicar emails
       try {
         await db.execute(`ALTER TABLE organizations ADD COLUMN "lastTrialNotice" TEXT`);
+      } catch {
+        // la columna ya existe
+      }
+      // Consumible de consulta: se descuenta 1 unidad al completar una cita
+      try {
+        await db.execute(`ALTER TABLE inventory_items ADD COLUMN "deductOnConsult" INTEGER NOT NULL DEFAULT 0`);
       } catch {
         // la columna ya existe
       }
@@ -243,7 +255,26 @@ export function ensureDb(): Promise<void> {
         "updatedAt" TEXT NOT NULL
       )`);
 
-      // Movimientos de stock (entradas y salidas)
+      // Categorías del inventario por organización
+      await db.execute(`CREATE TABLE IF NOT EXISTS inventory_categories (
+        id TEXT PRIMARY KEY,
+        "organizationId" TEXT,
+        name TEXT NOT NULL,
+        "createdAt" TEXT NOT NULL,
+        "updatedAt" TEXT NOT NULL
+      )`);
+
+      // Proveedores por organización
+      await db.execute(`CREATE TABLE IF NOT EXISTS suppliers (
+        id TEXT PRIMARY KEY,
+        "organizationId" TEXT,
+        name TEXT NOT NULL,
+        phone TEXT,
+        email TEXT,
+        "createdAt" TEXT NOT NULL,
+        "updatedAt" TEXT NOT NULL
+      )`);
+
       await db.execute(`CREATE TABLE IF NOT EXISTS stock_movements (
         id TEXT PRIMARY KEY,
         "organizationId" TEXT,
@@ -260,6 +291,24 @@ export function ensureDb(): Promise<void> {
 
       // Migración de datos: org por defecto + roles
       const now = new Date().toISOString();
+      // Precarga: categorías ya usadas en ítems existentes
+      await db.execute(`INSERT INTO inventory_categories (id, "organizationId", name, "createdAt", "updatedAt")
+        SELECT lower(hex(randomblob(16))), i."organizationId", i.category, ?, ?
+        FROM inventory_items i
+        WHERE i.category IS NOT NULL AND i.category != ''
+          AND NOT EXISTS (
+            SELECT 1 FROM inventory_categories c
+            WHERE c."organizationId" IS i."organizationId" AND lower(c.name) = lower(i.category)
+          )`, [now, now]);
+      // Precarga: proveedores ya usados en ítems existentes
+      await db.execute(`INSERT INTO suppliers (id, "organizationId", name, "createdAt", "updatedAt")
+        SELECT lower(hex(randomblob(16))), i."organizationId", i.supplier, ?, ?
+        FROM inventory_items i
+        WHERE i.supplier IS NOT NULL AND i.supplier != ''
+          AND NOT EXISTS (
+            SELECT 1 FROM suppliers s
+            WHERE s."organizationId" IS i."organizationId" AND lower(s.name) = lower(i.supplier)
+          )`, [now, now]);
       const orgResult = await db.execute('SELECT id FROM organizations LIMIT 1');
       let defaultOrgId: string;
       if (orgResult.rows.length === 0) {

@@ -16,9 +16,10 @@ export function usePrescriptions() {
   }, []);
 
   const addPrescription = async (prescriptionData: Omit<Prescription, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newPrescription = await apiCreate<Prescription>('prescriptions', prescriptionData);
-    setPrescriptions(prev => [newPrescription, ...prev]);
-    return newPrescription;
+    const newPrescription = await apiCreate<Prescription & { _warnings?: unknown }>('prescriptions', prescriptionData);
+    const { _warnings, ...clean } = newPrescription;
+    setPrescriptions(prev => [clean as Prescription, ...prev]);
+    return newPrescription as Prescription & { _warnings?: unknown };
   };
 
   const updatePrescription = async (id: string, updates: Partial<Prescription>) => {

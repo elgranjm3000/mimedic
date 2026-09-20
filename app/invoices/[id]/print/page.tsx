@@ -21,7 +21,7 @@ const statusLabels: Record<string, string> = {
 export default function PrintInvoicePage() {
   const { t } = useLang();
   const params = useParams<{ id: string }>();
-  const { orgName, currency } = useOrgSettings();
+  const { orgName, currency, orgLogo } = useOrgSettings();
   const dualCurrency = currency === 'USD' || currency === 'VES';
   const { rate: bcvRate, updatedAt: bcvUpdatedAt } = useBcvRate(dualCurrency);
   const otherCurrency = currency === 'VES' ? 'USD' : currency === 'USD' ? 'VES' : null;
@@ -42,8 +42,14 @@ export default function PrintInvoicePage() {
           <div className="text-gray-900">
             {/* Encabezado */}
             <div className="flex items-start justify-between border-b-2 border-teal-600 pb-6">
-              <div>
+              <div className="flex items-center gap-3">
+                {orgLogo && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={orgLogo} alt="" className="h-12 w-auto max-w-[120px] object-contain" />
+                )}
                 <h1 className="text-2xl font-bold text-teal-700 tracking-tight">{orgName || 'MediControl'}</h1>
+              </div>
+              <div>
                 <p className="mt-1 text-sm text-gray-500">{t('Documento de factura')}</p>
               </div>
               <div className="text-right">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Hospital, Building, Stethoscope, Loader2, CheckCircle2, Gift } from 'lucide-react';
@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CURRENCIES } from '@/lib/format';
+import { Camera, Image as ImageIcon } from 'lucide-react';
 import { OrganizationType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -44,6 +45,8 @@ export default function RegisterPage() {
   const [adminLastName, setAdminLastName] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
+  const [logo, setLogo] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -66,7 +69,7 @@ export default function RegisterPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          orgName, type, currency,
+          orgName, type, currency, logo,
           adminFirstName, adminLastName, adminEmail, adminPassword,
         }),
       });
@@ -149,6 +152,51 @@ export default function RegisterPage() {
                   value={orgName}
                   onChange={(e) => setOrgName(e.target.value)}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Logo (opcional)</Label>
+                <div className="flex items-center gap-3">
+                  {logo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={logo} alt="Logo" className="h-14 w-28 object-contain rounded-md border border-gray-200 bg-white" />
+                  ) : (
+                    <div className="h-14 w-28 rounded-md border border-dashed border-gray-300 flex items-center justify-center">
+                      <ImageIcon className="h-5 w-5 text-gray-300" />
+                    </div>
+                  )}
+                  <Button type="button" variant="outline" size="sm" onClick={() => logoInputRef.current?.click()} className="min-h-[36px]">
+                    <Camera className="h-4 w-4 mr-2" />
+                    {logo ? 'Cambiar' : 'Subir logo'}
+                  </Button>
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        const img = new Image();
+                        img.onload = () => {
+                          const max = 400;
+                          const scale = Math.min(1, max / Math.max(img.width, img.height));
+                          const canvas = document.createElement('canvas');
+                          canvas.width = Math.round(img.width * scale);
+                          canvas.height = Math.round(img.height * scale);
+                          canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+                          setLogo(canvas.toDataURL('image/png'));
+                        };
+                        img.src = reader.result as string;
+                      };
+                      reader.readAsDataURL(file);
+                      e.target.value = '';
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-gray-500">Se verá en sus facturas y recetas impresas.</p>
               </div>
 
               <div className="space-y-2">

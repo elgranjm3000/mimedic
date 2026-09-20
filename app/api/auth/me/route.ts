@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
   const result = await db.execute({
     sql: `SELECT u.id, u.email, u."firstName", u."lastName", u.role, u."organizationId", u.avatar, u.signature, u."isActive", u."createdAt", u."updatedAt",
-                 o.name AS "organizationName", o.currency AS "organizationCurrency"
+                 o.name AS "organizationName", o.currency AS "organizationCurrency", o.logo AS "organizationLogo"
           FROM users u LEFT JOIN organizations o ON o.id = u."organizationId"
           WHERE u.id = ?`,
     args: [requester.id],
@@ -28,6 +28,7 @@ export async function GET(request: Request) {
     organizationId: row.organizationId,
     organizationName: row.organizationName,
     organizationCurrency: row.organizationCurrency ?? 'USD',
+    organizationLogo: row.organizationLogo,
     avatar: row.avatar,
     signature: row.signature,
     isActive: Boolean(row.isActive),
@@ -67,6 +68,20 @@ export async function PATCH(request: Request) {
     }
     updates.push(`signature = ?`);
     args.push(body.signature);
+  }
+
+  // Logo de la organización: solo el admin de la org puede actualizarlo
+  if (typeof body.organizationLogo === 'string' || body.organizationLogo === null) {
+    if (requester.role !== 'admin' || !requester.organizationId) {
+      return NextResponse.json({ error: 'Solo el admin de la organización puede cambiar su logo' }, { status: 403 });
+    }
+    if (body.organizationLogo && body.organizationLogo.length > 500_000) {
+      return NextResponse.json({ error: 'La imagen es demasiado grande' }, { status: 413 });
+    }
+    await db.execute({
+      sql: `UPDATE organizations SET logo = ?, "updatedAt" = ? WHERE id = ?`,
+      args: [body.organizationLogo, new Date().toISOString(), requester.organizationId],
+    });
   }
 
   // Cambio de contraseña: exige la actual

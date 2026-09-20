@@ -30,10 +30,12 @@ export function InvoiceForm({ invoice, onSubmit, onCancel }: InvoiceFormProps) {
       patientId: invoice.patientId,
       dueDate: invoice.dueDate,
       status: invoice.status,
+      paymentMethod: invoice.paymentMethod ?? 'efectivo',
       notes: invoice.notes || '',
       items: invoice.items,
     } : {
       status: 'pending',
+      paymentMethod: 'efectivo',
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
       items: [{ id: crypto.randomUUID(), description: '', quantity: 1, unitPrice: 0, total: 0 }],
     }
@@ -223,19 +225,41 @@ export function InvoiceForm({ invoice, onSubmit, onCancel }: InvoiceFormProps) {
           </Card>
 
           {invoice && (
-            <div>
-              <Label htmlFor="status">Estado</Label>
-              <Select onValueChange={(value) => setValue('status', value)} defaultValue={invoice.status}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Estado de la factura" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">{t('Pendiente')}</SelectItem>
-                  <SelectItem value="paid">{t('Pagada')}</SelectItem>
-                  <SelectItem value="overdue">{t('Vencida')}</SelectItem>
-                  <SelectItem value="cancelled">{t('Cancelada')}</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="status">Estado</Label>
+                <Select onValueChange={(value) => setValue('status', value)} defaultValue={invoice.status}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Estado de la factura" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">{t('Pendiente')}</SelectItem>
+                    <SelectItem value="paid">{t('Pagada')}</SelectItem>
+                    <SelectItem value="overdue">{t('Vencida')}</SelectItem>
+                    <SelectItem value="cancelled">{t('Cancelada')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="paymentMethod">Método de pago</Label>
+                <Select
+                  onValueChange={(value) => setValue('paymentMethod', value)}
+                  defaultValue={invoice.paymentMethod ?? 'efectivo'}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Método de pago" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="efectivo">Efectivo</SelectItem>
+                    <SelectItem value="punto">Punto de venta</SelectItem>
+                    <SelectItem value="transferencia">Transferencia</SelectItem>
+                    <SelectItem value="otro">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Al marcar la factura como pagada, el cobro entra a Caja con este método.
+                </p>
+              </div>
             </div>
           )}
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Loader2, Camera, PenLine, User as UserIcon } from 'lucide-react';
 import { SignaturePad } from '@/components/signature-pad';
 import { toast } from 'sonner';
@@ -13,6 +13,29 @@ import { useAuth } from '@/contexts/auth-context';
 import { roleLabels } from '@/lib/roles';
 import { cn } from '@/lib/utils';
 import { useLang } from '@/contexts/i18n-context';
+
+/** Redimensiona un logo a PNG (mantiene transparencia, máx 400px) y devuelve un data URL. */
+function fileToLogo(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const max = 400;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = () => reject(new Error('No se pudo leer la imagen'));
+      img.src = reader.result as string;
+    };
+    reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
+    reader.readAsDataURL(file);
+  });
+}
 
 /** Redimensiona la imagen a JPEG con fondo blanco (para firmas) y devuelve un data URL. */
 function fileToSignature(file: File): Promise<string> {
@@ -74,12 +97,23 @@ export default function ProfilePage() {
   const { user, updateUserState } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const signatureInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [signatureMode, setSignatureMode] = useState<'options' | 'draw'>('options');
+
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      fetch('/api/auth/me', { credentials: 'same-origin' })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => d?.organizationLogo !== undefined && setOrgLogo(d.organizationLogo))
+        .catch(() => {});
+    }
+  }, [user?.role, user?.id]);
 
   const [firstName, setFirstName] = useState(user?.firstName ?? '');
   const [lastName, setLastName] = useState(user?.lastName ?? '');
   const [avatar, setAvatar] = useState<string | null>(user?.avatar ?? null);
   const [signature, setSignature] = useState<string | null>(user?.signature ?? null);
+  const [orgLogo, setOrgLogo] = useState<string | null>(user?.organizationLogo ?? null);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [saving, setSaving] = useState(false);
@@ -124,6 +158,7 @@ export default function ProfilePage() {
           lastName: lastName.trim(),
           avatar,
           signature,
+          organizationLogo: orgLogo,
           currentPassword: currentPassword || undefined,
           newPassword: newPassword || undefined,
         }),
@@ -226,6 +261,72 @@ export default function ProfilePage() {
           </div>
         </CardContent>
       </Card>
+
+      {user.role === 'admin' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Logo de la organización</CardTitle>
+            <CardDescription>Aparece en las facturas, recetas e historias clínicas impresas.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+              {orgLogo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={orgLogo}
+                  alt="Logo de la organización"
+                  className="h-20 w-40 object-contain rounded-md border border-gray-200 bg-white"
+                />
+              ) : (
+                <div className="h-20 w-40 rounded-md border border-dashed border-gray-300 flex items-center justify-center text-xs text-gray-400">
+                  Sin logo cargado
+                </div>
+              )}
+              <div className="flex flex-col gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => logoInputRef.current?.click()}
+                  className="min-h-[36px]"
+                >
+                  <Camera className="h-4 w-4 mr-2" />
+                  {orgLogo ? 'Cambiar logo' : 'Subir logo'}
+                </Button>
+                {orgLogo && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setOrgLogo(null)}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 min-h-[36px]"
+                  >
+                    Quitar logo
+                  </Button>
+                )}
+              </div>
+            </div>
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                if (!file.type.startsWith('image/')) {
+                  toast.error('Elegí un archivo de imagen');
+                  return;
+                }
+                fileToLogo(file)
+                  .then(setOrgLogo)
+                  .catch(() => toast.error('No se pudo procesar la imagen'));
+                e.target.value = '';
+              }}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {user.role === 'doctor' && (
         <Card>

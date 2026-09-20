@@ -24,6 +24,7 @@ export interface User {
   signature?: string | null;
   /** Datos transitorios de sesión: organización y prueba gratuita */
   organizationName?: string | null;
+  organizationLogo?: string | null;
   trialEndsAt?: string | null;
   isActive: boolean;
   createdAt: string;
@@ -139,6 +140,8 @@ export interface InventoryItem {
   minStock: number;
   cost?: number | null;
   supplier?: string | null;
+  /** Consumible de consulta: se descuenta 1 unidad al completar una cita */
+  deductOnConsult?: boolean;
   createdAt: string;
   updatedAt: string;
 }

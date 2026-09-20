@@ -13,7 +13,7 @@ import { Patient, MedicalRecord, Prescription } from '@/lib/types';
 function PrintRecordContent() {
   const search = useSearchParams();
   const patientId = search?.get('patient') ?? '';
-  const { orgName } = useOrgSettings();
+  const { orgName, orgLogo } = useOrgSettings();
 
   const fetchDoc = async () => {
     const [patients, records, prescriptions] = await Promise.all([
@@ -44,8 +44,14 @@ function PrintRecordContent() {
           <div className="text-gray-900">
             {/* Encabezado */}
             <div className="flex items-start justify-between border-b-2 border-teal-600 pb-6">
-              <div>
+              <div className="flex items-center gap-3">
+                {orgLogo && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={orgLogo} alt="" className="h-12 w-auto max-w-[120px] object-contain" />
+                )}
                 <h1 className="text-2xl font-bold text-teal-700 tracking-tight">{orgName || 'MediControl'}</h1>
+              </div>
+              <div>
                 <p className="mt-1 text-sm text-gray-500">Historia Clínica</p>
               </div>
               <div className="text-right text-sm text-gray-500">

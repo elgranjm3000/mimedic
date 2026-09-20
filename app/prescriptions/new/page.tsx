@@ -16,8 +16,15 @@ function NewPrescriptionContent() {
 
   const handleSubmit = async (prescriptionData: any) => {
     try {
-      await addPrescription(prescriptionData);
+      const created = await addPrescription(prescriptionData);
       toast.success('Prescripción creada correctamente');
+      const warnings = (created as { _warnings?: { item: string; reason: string }[] })._warnings;
+      if (warnings?.length) {
+        const detail = warnings
+          .map((w) => w.reason === 'no_existe' ? `"${w.item}" no está en inventario` : `"${w.item}" sin stock suficiente`)
+          .join(' · ');
+        toast.warning(`Inventario: ${detail}`);
+      }
       router.push(recordId ? `/records?patient=${initialPatientId}` : '/prescriptions');
     } catch {
       toast.error('No se pudo guardar. Intentá de nuevo.');

@@ -4,7 +4,8 @@ import { useLang } from '@/contexts/i18n-context';
 import { useParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { PrintDocument, useOrganizationName } from '@/components/print-document';
+import { PrintDocument } from '@/components/print-document';
+import { useOrgSettings } from '@/hooks/use-org-settings';
 import { apiGetOne } from '@/lib/api';
 import { useUsers } from '@/hooks/use-users';
 import { roleLabels } from '@/lib/roles';
@@ -14,7 +15,7 @@ export default function PrintPrescriptionPage() {
   const { t } = useLang();
   const params = useParams<{ id: string }>();
   const { users } = useUsers();
-  const orgName = useOrganizationName();
+  const { orgName, orgLogo } = useOrgSettings();
 
   const fetchDoc = () => apiGetOne<Prescription>('prescriptions', params.id);
 
@@ -29,8 +30,14 @@ export default function PrintPrescriptionPage() {
           <div className="text-gray-900">
             {/* Encabezado */}
             <div className="flex items-start justify-between border-b-2 border-teal-600 pb-6">
-              <div>
+              <div className="flex items-center gap-3">
+                {orgLogo && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={orgLogo} alt="" className="h-12 w-auto max-w-[120px] object-contain" />
+                )}
                 <h1 className="text-2xl font-bold text-teal-700 tracking-tight">{orgName || 'MediControl'}</h1>
+              </div>
+              <div>
                 <p className="mt-1 text-sm text-gray-500">{t('Receta médica')}</p>
               </div>
               <div className="text-right">
