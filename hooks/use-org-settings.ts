@@ -8,10 +8,7 @@ export function useOrgSettings(): { orgName: string; currency: string } {
   const [currency, setCurrency] = useState('USD');
 
   useEffect(() => {
-    const stored = typeof window !== 'undefined' ? localStorage.getItem('medical_current_user') : null;
-    const id = stored ? (JSON.parse(stored)?.id as string | undefined) : undefined;
-    if (!id) return;
-    fetch('/api/auth/me', { headers: { 'x-user-id': id } })
+    fetch('/api/auth/me', { credentials: 'same-origin' })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d) {

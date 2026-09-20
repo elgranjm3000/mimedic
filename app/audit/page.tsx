@@ -51,10 +51,8 @@ export default function AuditPage() {
 
   const load = (action: string) => {
     setLoading(true);
-    const stored = localStorage.getItem('medical_current_user');
-    const id = stored ? (JSON.parse(stored)?.id as string | undefined) : undefined;
     const qs = action !== 'all' ? `?action=${action}` : '';
-    fetch(`/api/audit-log${qs}`, { headers: { 'x-user-id': id ?? '' } })
+    fetch(`/api/audit-log${qs}`, { credentials: 'same-origin' })
       .then((r) => (r.ok ? r.json() : []))
       .then(setRows)
       .catch(() => setRows([]))

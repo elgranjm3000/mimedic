@@ -73,20 +73,16 @@ export default function RegisterPage() {
       const body = await res.json();
       if (!res.ok) throw new Error(body.error || 'Error al registrar');
 
-      // Auto-login: guarda la sesión y entra al sistema
-      const loginRes = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: adminEmail, password: adminPassword }),
-      });
-      const user = await loginRes.json();
-      if (loginRes.ok) {
-        localStorage.setItem('medical_current_user', JSON.stringify(user));
-        window.location.href = '/';
-        return;
-      }
-      // Si el auto-login falla, igual la cuenta existe
-      router.push('/');
+      // El registro ya dejó la cookie de sesión httpOnly: entrar directo
+      localStorage.setItem(
+        'medical_current_user',
+        JSON.stringify({
+          id: '', email: adminEmail, firstName: adminFirstName, lastName: adminLastName,
+          role: 'admin', organizationName: orgName, trialEndsAt: body.trialEndsAt, isActive: true,
+        })
+      );
+      window.location.href = '/';
+      return;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al registrar');
       setSaving(false);

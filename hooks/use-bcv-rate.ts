@@ -11,10 +11,7 @@ export function useBcvRate(enabled: boolean): { rate: number | null; updatedAt: 
 
   useEffect(() => {
     if (!enabled) return;
-    const stored = localStorage.getItem(CURRENT_USER_KEY);
-    const id = stored ? (JSON.parse(stored)?.id as string | undefined) : undefined;
-    if (!id) return;
-    fetch('/api/exchange-rate', { headers: { 'x-user-id': id } })
+    fetch('/api/exchange-rate', { credentials: 'same-origin' })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d?.rate) {

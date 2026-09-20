@@ -144,6 +144,12 @@ export function ensureDb(): Promise<void> {
       } catch {
         // la columna ya existe
       }
+      // Último aviso de trial enviado (YYYY-MM-DD) para no duplicar emails
+      try {
+        await db.execute(`ALTER TABLE organizations ADD COLUMN "lastTrialNotice" TEXT`);
+      } catch {
+        // la columna ya existe
+      }
 
       // Tasa de cambio BCV (USD→VES) con respaldo local
       await db.execute(`CREATE TABLE IF NOT EXISTS exchange_rates (

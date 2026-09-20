@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { db, ensureDb } from '@/lib/db';
 import { audit } from '@/lib/audit';
+import { sessionCookie } from '@/lib/auth';
 
 const TRIAL_DAYS = 7;
 
@@ -35,6 +36,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Ese email ya está registrado. Iniciá sesión.' }, { status: 409 });
   }
 
+  const adminUserId = crypto.randomUUID();
   const now = new Date();
   const trialEndsAt = new Date(now.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000).toISOString();
   const nowIso = now.toISOString();
@@ -50,7 +52,7 @@ export async function POST(request: Request) {
     {
       sql: `INSERT INTO users (id, email, password_hash, "firstName", "lastName", role, "organizationId", "isActive", "createdAt", "updatedAt")
             VALUES (?, ?, ?, ?, ?, 'admin', ?, 1, ?, ?)`,
-      args: [crypto.randomUUID(), adminEmail, adminHash, adminFirstName, adminLastName, orgId, nowIso, nowIso],
+      args: [adminUserId, adminEmail, adminHash, adminFirstName, adminLastName, orgId, nowIso, nowIso],
     },
   ]);
 
@@ -64,8 +66,8 @@ export async function POST(request: Request) {
     detail: `Prueba gratuita de ${TRIAL_DAYS} días — ${orgName}`,
   }, request);
 
-  return NextResponse.json({
-    id: crypto.randomUUID(), // placeholder, el cliente inicia sesión con las credenciales
+  const response = NextResponse.json({
+    id: adminUserId,
     email: adminEmail,
     firstName: adminFirstName,
     lastName: adminLastName,
@@ -77,4 +79,7 @@ export async function POST(request: Request) {
     createdAt: nowIso,
     updatedAt: nowIso,
   }, { status: 201 });
+  const cookie = sessionCookie(adminUserId);
+  response.cookies.set(cookie.name, cookie.value, cookie.options);
+  return response;
 }

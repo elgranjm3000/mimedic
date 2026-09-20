@@ -1,20 +1,7 @@
-const CURRENT_USER_KEY = 'medical_current_user';
-
-function authHeaders(): Record<string, string> {
-  if (typeof window === 'undefined') return {};
-  const data = localStorage.getItem(CURRENT_USER_KEY);
-  if (!data) return {};
-  try {
-    const user = JSON.parse(data);
-    return user?.id ? { 'x-user-id': user.id } : {};
-  } catch {
-    return {};
-  }
-}
-
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
     ...options,
   });
   if (!res.ok) {

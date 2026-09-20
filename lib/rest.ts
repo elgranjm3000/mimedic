@@ -19,21 +19,10 @@ export interface Requester {
   organizationId: string | null;
 }
 
-/** Resuelve el usuario que llama vía el header x-user-id (sesión del cliente). */
+/** Resuelve el usuario que llama desde la cookie JWT firmada (no falsificable). */
 export async function getRequester(request: Request): Promise<Requester | null> {
-  const userId = request.headers.get('x-user-id');
-  if (!userId) return null;
-  const result = await db.execute({
-    sql: `SELECT id, role, "organizationId" FROM users WHERE id = ? AND "isActive" = 1`,
-    args: [userId],
-  });
-  if (result.rows.length === 0) return null;
-  const row = result.rows[0];
-  return {
-    id: row.id as string,
-    role: row.role as string,
-    organizationId: (row.organizationId as string | null) ?? null,
-  };
+  const { getSessionUser } = await import('./auth');
+  return getSessionUser(request);
 }
 
 /** 401 si no hay sesión válida. */

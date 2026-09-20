@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { db, ensureDb } from '@/lib/db';
 import { audit } from '@/lib/audit';
+import { sessionCookie } from '@/lib/auth';
 
 export async function POST(request: Request) {
   await ensureDb();
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
     action: 'login',
   }, request);
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     id: row.id,
     email: row.email,
     firstName: row.firstName,
@@ -60,4 +61,8 @@ export async function POST(request: Request) {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   });
+
+  const cookie = sessionCookie(row.id as string);
+  response.cookies.set(cookie.name, cookie.value, cookie.options);
+  return response;
 }

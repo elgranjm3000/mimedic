@@ -117,10 +117,8 @@ export default function ProfilePage() {
     try {
       const res = await fetch('/api/auth/me', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': user.id,
-        },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify({
           firstName: firstName.trim(),
           lastName: lastName.trim(),
