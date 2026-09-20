@@ -44,7 +44,7 @@ import {
 
 const navItems = [
   {
-    href: '/',
+    href: '/panel',
     label: 'nav.dashboard',
     icon: Home,
     roles: ['admin', 'doctor', 'nurse', 'receptionist'],
@@ -248,7 +248,7 @@ export function Navigation() {
                 </div>
               </SheetContent>
             </Sheet>
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/panel" className="flex items-center gap-2">
               <Stethoscope className="h-7 w-7 text-teal-600" />
               <span className="text-lg font-bold text-gray-900">MediControl</span>
             </Link>
