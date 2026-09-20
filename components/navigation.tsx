@@ -194,41 +194,14 @@ export function Navigation() {
       {/* Barra superior móvil/tablet */}
       <div className="lg:hidden sticky top-0 z-50 bg-white border-b border-gray-200">
         <div className="flex items-center justify-between h-14 px-4 gap-2">
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <Stethoscope className="h-7 w-7 text-teal-600" />
-            <span className="text-lg font-bold text-gray-900">MediControl</span>
-          </Link>
           <div className="flex items-center gap-1 shrink-0">
-            {langSwitcher}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="min-h-[40px] px-2">
-                  <UserAvatar user={user} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>{t('nav.myAccount')}</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/perfil">
-                    <UserIcon className="mr-2 h-4 w-4" />
-                    <span>{t('nav.myProfile')}</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>{t('nav.logout')}</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="min-h-[40px] min-w-[40px]" aria-label={t('nav.openMenu')}>
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-72 p-0">
+              <SheetContent side="left" className="w-72 p-0">
                 <SheetHeader className="px-4 py-4 border-b border-gray-100">
                   <SheetTitle className="flex items-center gap-2 text-base">
                     <Stethoscope className="h-5 w-5 text-teal-600" />
@@ -275,6 +248,35 @@ export function Navigation() {
                 </div>
               </SheetContent>
             </Sheet>
+            <Link href="/" className="flex items-center gap-2">
+              <Stethoscope className="h-7 w-7 text-teal-600" />
+              <span className="text-lg font-bold text-gray-900">MediControl</span>
+            </Link>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            {langSwitcher}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="min-h-[40px] px-2">
+                  <UserAvatar user={user} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>{t('nav.myAccount')}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/perfil">
+                    <UserIcon className="mr-2 h-4 w-4" />
+                    <span>{t('nav.myProfile')}</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={logout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>{t('nav.logout')}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
