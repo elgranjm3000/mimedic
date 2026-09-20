@@ -17,15 +17,35 @@ import { usePatients } from '@/hooks/use-patients';
 import { useAppointments } from '@/hooks/use-appointments';
 import { useInvoices } from '@/hooks/use-invoices';
 import { usePrescriptions } from '@/hooks/use-prescriptions';
+import { useMedicalRecords } from '@/hooks/use-medical-records';
 import { useOrgSettings } from '@/hooks/use-org-settings';
 import { formatMoney } from '@/lib/format';
 
 export default function ReportsPage() {
   const { patients } = usePatients();
   const { currency } = useOrgSettings();
+
   const { appointments } = useAppointments();
   const { invoices } = useInvoices();
   const { prescriptions } = usePrescriptions();
+  const { records } = useMedicalRecords();
+
+  const doctorStats = useMemo(() => {
+    const map = new Map<string, { doctor: string; total: number; completed: number; cancelled: number; consultas: number }>();
+    for (const a of appointments) {
+      const key = a.doctorId;
+      if (!map.has(key)) {
+        map.set(key, { doctor: a.doctorName, total: 0, completed: 0, cancelled: 0, consultas: 0 });
+      }
+      const s = map.get(key)!;
+      s.total += 1;
+      if (a.status === 'completed') s.completed += 1;
+      if (a.status === 'cancelled') s.cancelled += 1;
+      s.consultas = records.filter((r) => r.doctorId === key).length;
+    }
+    return Array.from(map.values()).sort((a, b) => b.total - a.total);
+  }, [appointments, records]);
+
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -208,6 +228,47 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Actividad por médico */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Actividad por Médico</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {doctorStats.length === 0 ? (
+            <p className="p-6 text-sm text-gray-500">Sin citas registradas.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50 text-left">
+                    <th className="py-3 px-6 text-xs font-semibold uppercase tracking-wider text-gray-500">Profesional</th>
+                    <th className="py-3 px-6 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Citas</th>
+                    <th className="py-3 px-6 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Completadas</th>
+                    <th className="py-3 px-6 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Canceladas</th>
+                    <th className="py-3 px-6 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Consultas (HCE)</th>
+                    <th className="py-3 px-6 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Cumplimiento</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {doctorStats.map((d) => (
+                    <tr key={d.doctor} className="border-b border-gray-100">
+                      <td className="py-2.5 px-6 font-medium text-gray-900">Dr. {d.doctor}</td>
+                      <td className="py-2.5 px-6 text-right tabular-nums">{d.total}</td>
+                      <td className="py-2.5 px-6 text-right tabular-nums text-emerald-700">{d.completed}</td>
+                      <td className="py-2.5 px-6 text-right tabular-nums text-red-600">{d.cancelled}</td>
+                      <td className="py-2.5 px-6 text-right tabular-nums">{d.consultas}</td>
+                      <td className="py-2.5 px-6 text-right tabular-nums font-semibold">
+                        {d.total ? Math.round((d.completed / d.total) * 100) : 0}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Appointment Types Distribution */}

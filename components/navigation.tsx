@@ -12,10 +12,13 @@ import {
   Stethoscope,
   FileText,
   CreditCard,
+  Wallet,
   BarChart3,
   Settings,
   LogOut,
   Menu,
+  Activity,
+  Boxes,
   Hospital,
   ShieldCheck,
   User as UserIcon,
@@ -65,6 +68,24 @@ const navItems = [
     roles: ['admin', 'doctor', 'nurse', 'receptionist'],
   },
   {
+    href: '/triage',
+    label: 'nav.triage',
+    icon: Activity,
+    roles: ['admin', 'doctor', 'nurse', 'receptionist'],
+  },
+  {
+    href: '/inventory',
+    label: 'nav.inventory',
+    icon: Boxes,
+    roles: ['admin', 'nurse'],
+  },
+  {
+    href: '/records',
+    label: 'nav.records',
+    icon: Stethoscope,
+    roles: ['admin', 'doctor', 'nurse'],
+  },
+  {
     href: '/prescriptions',
     label: 'nav.prescriptions',
     icon: FileText,
@@ -74,6 +95,12 @@ const navItems = [
     href: '/invoices',
     label: 'nav.invoices',
     icon: CreditCard,
+    roles: ['admin', 'receptionist'],
+  },
+  {
+    href: '/cash',
+    label: 'nav.cash',
+    icon: Wallet,
     roles: ['admin', 'receptionist'],
   },
   {
@@ -144,94 +171,60 @@ export function Navigation() {
 
   const closeAndNavigate = () => setMobileOpen(false);
 
+  const langSwitcher = (
+    <div className="flex items-center rounded-md border border-gray-200 overflow-hidden" role="group" aria-label="Idioma / Language">
+      {(['es', 'en'] as const).map((l) => (
+        <button
+          key={l}
+          type="button"
+          onClick={() => setLang(l)}
+          className={cn(
+            'px-2 py-1.5 text-xs font-semibold uppercase transition-colors min-h-[32px]',
+            lang === l ? 'bg-teal-600 text-white' : 'text-gray-500 hover:bg-gray-50'
+          )}
+        >
+          {l}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16 gap-2">
-          {/* Logo */}
+    <>
+      {/* Barra superior móvil/tablet */}
+      <div className="lg:hidden sticky top-0 z-50 bg-white border-b border-gray-200">
+        <div className="flex items-center justify-between h-14 px-4 gap-2">
           <Link href="/" className="flex items-center gap-2 shrink-0">
-            <Stethoscope className="h-8 w-8 text-teal-600" />
-            <span className="text-xl font-bold text-gray-900">MediControl</span>
+            <Stethoscope className="h-7 w-7 text-teal-600" />
+            <span className="text-lg font-bold text-gray-900">MediControl</span>
           </Link>
-
-          {/* Desktop nav (xl+) */}
-          <div className="hidden xl:flex items-center gap-1">
-            {allowedNavItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(navLinkClasses(isActive), 'px-3 py-2')}
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  <span>{t(item.label)}</span>
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* User menu */}
           <div className="flex items-center gap-1 shrink-0">
-            {/* Idioma */}
-            <div className="hidden md:flex items-center rounded-md border border-gray-200 overflow-hidden" role="group" aria-label="Idioma / Language">
-              {(['es', 'en'] as const).map((l) => (
-                <button
-                  key={l}
-                  type="button"
-                  onClick={() => setLang(l)}
-                  className={cn(
-                    'px-2 py-1.5 text-xs font-semibold uppercase transition-colors min-h-[32px]',
-                    lang === l ? 'bg-teal-600 text-white' : 'text-gray-500 hover:bg-gray-50'
-                  )}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
-
+            {langSwitcher}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2 min-h-[40px]">
+                <Button variant="ghost" className="min-h-[40px] px-2">
                   <UserAvatar user={user} />
-                  <div className="hidden md:block text-left">
-                    <p className="text-sm font-medium text-gray-900 leading-tight">
-                      {user.firstName} {user.lastName}
-                    </p>
-                    <p className="text-xs text-gray-500 leading-tight">
-                      {t('role.' + user.role)}
-                    </p>
-                  </div>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>{t("nav.myAccount")}</DropdownMenuLabel>
+                <DropdownMenuLabel>{t('nav.myAccount')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/perfil">
                     <UserIcon className="mr-2 h-4 w-4" />
-                    <span>{t("nav.myProfile")}</span>
+                    <span>{t('nav.myProfile')}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>{t("nav.logout")}</span>
+                  <span>{t('nav.logout')}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {/* Mobile / tablet hamburger */}
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="xl:hidden min-h-[40px] min-w-[40px]"
-                  aria-label={t("nav.openMenu")}
-                >
+                <Button variant="ghost" size="icon" className="min-h-[40px] min-w-[40px]" aria-label={t('nav.openMenu')}>
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
@@ -247,7 +240,6 @@ export function Navigation() {
                     {allowedNavItems.map((item) => {
                       const Icon = item.icon;
                       const isActive = pathname === item.href;
-
                       return (
                         <Link
                           key={item.href}
@@ -268,9 +260,7 @@ export function Navigation() {
                         <p className="text-sm font-medium text-gray-900 truncate">
                           {user.firstName} {user.lastName}
                         </p>
-                        <p className="text-xs text-gray-500">
-                          {t('role.' + user.role)}
-                        </p>
+                        <p className="text-xs text-gray-500">{t('role.' + user.role)}</p>
                       </div>
                     </div>
                     <Button
@@ -279,7 +269,7 @@ export function Navigation() {
                       className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 min-h-[44px]"
                     >
                       <LogOut className="mr-2 h-4 w-4" />
-                      Cerrar Sesión
+                      {t('nav.logout')}
                     </Button>
                   </div>
                 </div>
@@ -288,6 +278,61 @@ export function Navigation() {
           </div>
         </div>
       </div>
-    </nav>
+
+      {/* Sidebar fija (desktop) */}
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 w-60 flex-col bg-white border-r border-gray-200 z-50">
+        <div className="flex items-center gap-2 h-16 px-5 border-b border-gray-100 shrink-0">
+          <Stethoscope className="h-7 w-7 text-teal-600" />
+          <span className="text-lg font-bold text-gray-900">MediControl</span>
+        </div>
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+          {allowedNavItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(navLinkClasses(isActive), 'px-3 py-2 min-h-[40px]')}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span>{t(item.label)}</span>
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="p-3 border-t border-gray-100 space-y-2 shrink-0">
+          <div className="flex justify-center">{langSwitcher}</div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="w-full justify-start gap-2 min-h-[44px] px-2">
+                <UserAvatar user={user} />
+                <div className="text-left min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate leading-tight">
+                    {user.firstName} {user.lastName}
+                  </p>
+                  <p className="text-xs text-gray-500 leading-tight">{t('role.' + user.role)}</p>
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" side="top" className="w-56">
+              <DropdownMenuLabel>{t('nav.myAccount')}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/perfil">
+                  <UserIcon className="mr-2 h-4 w-4" />
+                  <span>{t('nav.myProfile')}</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={logout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>{t('nav.logout')}</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </aside>
+    </>
   );
 }

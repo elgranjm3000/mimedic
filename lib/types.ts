@@ -76,10 +76,83 @@ export interface Prescription {
   doctorId: string;
   doctorName: string;
   appointmentId?: string;
+  recordId?: string | null;
   medications: Medication[];
   diagnosis: string;
   instructions: string;
   status: 'active' | 'completed' | 'cancelled';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MedicalRecord {
+  id: string;
+  organizationId?: string | null;
+  patientId: string;
+  patientName: string;
+  doctorId: string;
+  doctorName: string;
+  date: string;
+  status?: 'triaje' | 'completada';
+  triageLevel?: 'verde' | 'amarillo' | 'rojo' | null;
+  motivo?: string;
+  enfermedadActual?: string;
+  bloodPressure?: string;
+  heartRate?: number | null;
+  temperature?: number | null;
+  weight?: number | null;
+  height?: number | null;
+  oxygenSat?: number | null;
+  diagnostico?: string;
+  indicaciones?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CashType = 'ingreso' | 'egreso';
+export type CashMethod = 'efectivo' | 'punto' | 'transferencia' | 'otro';
+
+export interface CashEntry {
+  id: string;
+  organizationId?: string | null;
+  type: CashType;
+  concept: string;
+  amount: number;
+  method: CashMethod;
+  patientId?: string | null;
+  patientName?: string | null;
+  date: string;
+  registeredBy?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type StockMovementType = 'entrada' | 'salida';
+
+export interface InventoryItem {
+  id: string;
+  organizationId?: string | null;
+  name: string;
+  category?: string;
+  unit: string;
+  stock: number;
+  minStock: number;
+  cost?: number | null;
+  supplier?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StockMovement {
+  id: string;
+  organizationId?: string | null;
+  itemId: string;
+  itemName: string;
+  type: StockMovementType;
+  quantity: number;
+  reason?: string | null;
+  date: string;
+  registeredBy?: string | null;
   createdAt: string;
   updatedAt: string;
 }

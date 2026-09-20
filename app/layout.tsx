@@ -29,9 +29,11 @@ export default function RootLayout({
             <div className="min-h-screen bg-gray-50">
               <Navigation />
               <TrialGate>
-                <main className="py-8">
-                  {children}
-                </main>
+                <div className="lg:pl-60">
+                  <main className="py-8">
+                    {children}
+                  </main>
+                </div>
               </TrialGate>
             </div>
             </ProtectedRoute>

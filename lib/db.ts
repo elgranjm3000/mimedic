@@ -131,6 +131,13 @@ export function ensureDb(): Promise<void> {
       }
       await db.execute(`UPDATE organizations SET currency = 'USD' WHERE currency IS NULL`);
 
+      // Trazabilidad: receta emitida desde una consulta de la HCE
+      try {
+        await db.execute(`ALTER TABLE prescriptions ADD COLUMN "recordId" TEXT`);
+      } catch {
+        // la columna ya existe
+      }
+
       // Prueba gratuita de 7 días: fecha de vencimiento; NULL = licencia activa
       try {
         await db.execute(`ALTER TABLE organizations ADD COLUMN "trialEndsAt" TEXT`);
@@ -160,6 +167,90 @@ export function ensureDb(): Promise<void> {
         ip TEXT
       )`);
       await db.execute(`CREATE INDEX IF NOT EXISTS idx_audit_ts ON audit_log ("ts" DESC)`);
+
+      // Historia Clínica Electrónica: episodios de consulta con signos vitales
+      await db.execute(`CREATE TABLE IF NOT EXISTS medical_records (
+        id TEXT PRIMARY KEY,
+        "organizationId" TEXT,
+        "patientId" TEXT NOT NULL,
+        "patientName" TEXT NOT NULL,
+        "doctorId" TEXT NOT NULL,
+        "doctorName" TEXT NOT NULL,
+        date TEXT NOT NULL,
+        motivo TEXT,
+        "enfermedadActual" TEXT,
+        "bloodPressure" TEXT,
+        "heartRate" INTEGER,
+        temperature REAL,
+        weight REAL,
+        height REAL,
+        "oxygenSat" INTEGER,
+        diagnostico TEXT,
+        indicaciones TEXT,
+        "createdAt" TEXT NOT NULL,
+        "updatedAt" TEXT NOT NULL
+      )`);
+      await db.execute(`CREATE INDEX IF NOT EXISTS idx_records_patient ON medical_records ("patientId", date DESC)`);
+
+      // Triaje: estado del episodio y nivel de urgencia (tablas preexistentes)
+      try {
+        await db.execute(`ALTER TABLE medical_records ADD COLUMN status TEXT`);
+        await db.execute(`UPDATE medical_records SET status = 'completada' WHERE status IS NULL`);
+      } catch {
+        // la columna ya existe
+      }
+      try {
+        await db.execute(`ALTER TABLE medical_records ADD COLUMN "triageLevel" TEXT`);
+      } catch {
+        // la columna ya existe
+      }
+
+      // Caja diaria: ingresos y egresos
+      await db.execute(`CREATE TABLE IF NOT EXISTS cash_entries (
+        id TEXT PRIMARY KEY,
+        "organizationId" TEXT,
+        type TEXT NOT NULL,
+        concept TEXT NOT NULL,
+        amount REAL NOT NULL,
+        method TEXT NOT NULL,
+        "patientId" TEXT,
+        "patientName" TEXT,
+        date TEXT NOT NULL,
+        "registeredBy" TEXT,
+        "createdAt" TEXT NOT NULL,
+        "updatedAt" TEXT NOT NULL
+      )`);
+      await db.execute(`CREATE INDEX IF NOT EXISTS idx_cash_date ON cash_entries (date DESC)`);
+
+      // Inventario de insumos
+      await db.execute(`CREATE TABLE IF NOT EXISTS inventory_items (
+        id TEXT PRIMARY KEY,
+        "organizationId" TEXT,
+        name TEXT NOT NULL,
+        category TEXT,
+        unit TEXT NOT NULL,
+        stock REAL NOT NULL DEFAULT 0,
+        "minStock" REAL NOT NULL DEFAULT 0,
+        cost REAL,
+        supplier TEXT,
+        "createdAt" TEXT NOT NULL,
+        "updatedAt" TEXT NOT NULL
+      )`);
+
+      // Movimientos de stock (entradas y salidas)
+      await db.execute(`CREATE TABLE IF NOT EXISTS stock_movements (
+        id TEXT PRIMARY KEY,
+        "organizationId" TEXT,
+        "itemId" TEXT NOT NULL,
+        "itemName" TEXT NOT NULL,
+        type TEXT NOT NULL,
+        quantity REAL NOT NULL,
+        reason TEXT,
+        date TEXT NOT NULL,
+        "registeredBy" TEXT,
+        "createdAt" TEXT NOT NULL,
+        "updatedAt" TEXT NOT NULL
+      )`);
 
       // Migración de datos: org por defecto + roles
       const now = new Date().toISOString();

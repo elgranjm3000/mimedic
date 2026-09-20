@@ -296,7 +296,7 @@ export const appointmentsConfig: EntityConfig = {
 
 export const prescriptionsConfig: EntityConfig = {
   table: 'prescriptions',
-  columns: ['id', 'organizationId', 'patientId', 'patientName', 'doctorId', 'doctorName', 'appointmentId', 'medications', 'diagnosis', 'instructions', 'status', 'createdAt', 'updatedAt'],
+  columns: ['id', 'organizationId', 'patientId', 'patientName', 'doctorId', 'doctorName', 'appointmentId', 'recordId', 'medications', 'diagnosis', 'instructions', 'status', 'createdAt', 'updatedAt'],
   jsonFields: ['medications'],
   tenant: true,
 };
@@ -313,6 +313,34 @@ export const usersConfig: EntityConfig = {
   table: 'users',
   columns: ['id', 'organizationId', 'email', 'firstName', 'lastName', 'role', 'avatar', 'signature', 'isActive', 'createdAt', 'updatedAt'],
   booleanFields: ['isActive'],
+  tenant: true,
+};
+
+export const medicalRecordsConfig: EntityConfig = {
+  table: 'medical_records',
+  columns: ['id', 'organizationId', 'patientId', 'patientName', 'doctorId', 'doctorName', 'date', 'status', 'triageLevel', 'motivo', 'enfermedadActual', 'bloodPressure', 'heartRate', 'temperature', 'weight', 'height', 'oxygenSat', 'diagnostico', 'indicaciones', 'createdAt', 'updatedAt'],
+  numberFields: ['heartRate', 'temperature', 'weight', 'height', 'oxygenSat'],
+  tenant: true,
+};
+
+export const cashEntriesConfig: EntityConfig = {
+  table: 'cash_entries',
+  columns: ['id', 'organizationId', 'type', 'concept', 'amount', 'method', 'patientId', 'patientName', 'date', 'registeredBy', 'createdAt', 'updatedAt'],
+  numberFields: ['amount'],
+  tenant: true,
+};
+
+export const inventoryItemsConfig: EntityConfig = {
+  table: 'inventory_items',
+  columns: ['id', 'organizationId', 'name', 'category', 'unit', 'stock', 'minStock', 'cost', 'supplier', 'createdAt', 'updatedAt'],
+  numberFields: ['stock', 'minStock', 'cost'],
+  tenant: true,
+};
+
+export const stockMovementsConfig: EntityConfig = {
+  table: 'stock_movements',
+  columns: ['id', 'organizationId', 'itemId', 'itemName', 'type', 'quantity', 'reason', 'date', 'registeredBy', 'createdAt', 'updatedAt'],
+  numberFields: ['quantity'],
   tenant: true,
 };
 

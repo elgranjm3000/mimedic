@@ -36,7 +36,7 @@ export function PrintDocument({
     <div className="max-w-4xl mx-auto px-4">
       <style>{`
         @media print {
-          body > div > nav, .print-toolbar { display: none !important; }
+          aside, .print-toolbar, .lg\:hidden { display: none !important; }
           main { padding: 0 !important; }
           .print-paper { box-shadow: none !important; border: none !important; margin: 0 !important; max-width: none !important; width: 100% !important; }
         }

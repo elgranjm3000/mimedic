@@ -1,7 +1,7 @@
 'use client';
 import { useLang } from '@/contexts/i18n-context';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { Prescription, Medication } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -20,9 +20,12 @@ interface PrescriptionFormProps {
   prescription?: Prescription;
   onSubmit: (data: Omit<Prescription, 'id' | 'createdAt' | 'updatedAt'>) => void;
   onCancel: () => void;
+  /** Preselección desde la Historia Clínica */
+  initialPatientId?: string;
+  recordId?: string | null;
 }
 
-export function PrescriptionForm({ prescription, onSubmit, onCancel }: PrescriptionFormProps) {
+export function PrescriptionForm({ prescription, onSubmit, onCancel, initialPatientId, recordId }: PrescriptionFormProps) {
   const { t } = useLang();
   const [loading, setLoading] = useState(false);
   const { patients } = usePatients();
@@ -45,6 +48,12 @@ export function PrescriptionForm({ prescription, onSubmit, onCancel }: Prescript
     }
   });
 
+  useEffect(() => {
+    if (initialPatientId && !prescription) {
+      setValue('patientId', initialPatientId);
+    }
+  }, [initialPatientId, prescription, setValue]);
+
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'medications'
@@ -62,6 +71,7 @@ export function PrescriptionForm({ prescription, onSubmit, onCancel }: Prescript
       const doctorName = selectedDoctor ? `${selectedDoctor.firstName} ${selectedDoctor.lastName}` : '';
       await onSubmit({
         ...data,
+        recordId: recordId ?? null,
         patientName,
         doctorName,
       });
