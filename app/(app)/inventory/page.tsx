@@ -150,7 +150,7 @@ export default function InventoryPage() {
     let finalCategory = category;
     if (category === NEW_CATEGORY) {
       if (!newCategory.trim()) {
-        toast.error('Escribí el nombre de la nueva categoría');
+        toast.error('Escribe el nombre de la nueva categoría');
         return;
       }
       try {
@@ -163,7 +163,7 @@ export default function InventoryPage() {
     let finalSupplier = supplier;
     if (supplier === NEW_SUPPLIER) {
       if (!newSupplierName.trim()) {
-        toast.error('Escribí el nombre del nuevo proveedor');
+        toast.error('Escribe el nombre del nuevo proveedor');
         return;
       }
       try {
@@ -210,7 +210,7 @@ export default function InventoryPage() {
   const handleSaveMove = async () => {
     const qty = Number(moveQty);
     if (!moveDialog || !qty || qty <= 0) {
-      toast.error('Indicá una cantidad válida');
+      toast.error('Indica una cantidad válida');
       return;
     }
     const delta = moveType === 'entrada' ? qty : -qty;
@@ -461,7 +461,7 @@ export default function InventoryPage() {
               <div className="space-y-2">
                 <Label>Categoría</Label>
                 <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger><SelectValue placeholder="Seleccioná una categoría" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Selecciona una categoría" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Sin categoría</SelectItem>
                     {categories.map((c) => (
@@ -507,7 +507,7 @@ export default function InventoryPage() {
               <div className="space-y-2">
                 <Label>Proveedor</Label>
                 <Select value={supplier} onValueChange={setSupplier}>
-                  <SelectTrigger><SelectValue placeholder="Seleccioná un proveedor" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Selecciona un proveedor" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Sin proveedor</SelectItem>
                     {suppliers.map((s) => (

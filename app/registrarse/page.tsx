@@ -105,7 +105,7 @@ export default function RegisterPage() {
             <h1 className="text-3xl font-bold text-gray-900">Crear cuenta</h1>
             <p className="text-gray-600 mt-1 flex items-center gap-2">
               <Gift className="h-4 w-4 text-teal-600" />
-              Probá MediControl gratis durante 7 días, sin tarjeta
+              Prueba MediControl gratis durante 7 días, sin tarjeta
             </p>
           </div>
         </div>

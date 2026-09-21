@@ -126,7 +126,7 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      toast.error('Elegí un archivo de imagen');
+      toast.error('Elige un archivo de imagen');
       return;
     }
     try {
@@ -143,7 +143,7 @@ export default function ProfilePage() {
       return;
     }
     if (newPassword && !currentPassword) {
-      toast.error('Ingresá tu contraseña actual para cambiarla');
+      toast.error('Ingresa tu contraseña actual para cambiarla');
       return;
     }
 
@@ -315,7 +315,7 @@ export default function ProfilePage() {
                 const file = e.target.files?.[0];
                 if (!file) return;
                 if (!file.type.startsWith('image/')) {
-                  toast.error('Elegí un archivo de imagen');
+                  toast.error('Elige un archivo de imagen');
                   return;
                 }
                 fileToLogo(file)
@@ -408,7 +408,7 @@ export default function ProfilePage() {
                 const file = e.target.files?.[0];
                 if (!file) return;
                 if (!file.type.startsWith('image/')) {
-                  toast.error('Elegí un archivo de imagen');
+                  toast.error('Elige un archivo de imagen');
                   return;
                 }
                 fileToSignature(file)
@@ -424,7 +424,7 @@ export default function ProfilePage() {
       <Card>
         <CardHeader>
           <CardTitle>{t('Cambiar contraseña')}</CardTitle>
-          <CardDescription>Dejalos vacío si no querés cambiarla.</CardDescription>
+          <CardDescription>Deja los campos vacíos si no quieres cambiarla.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

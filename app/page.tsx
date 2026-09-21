@@ -112,7 +112,7 @@ const plans = [
 const steps = [
   {
     title: 'Crea tu cuenta',
-    text: 'Registrate con el nombre de tu consultorio o clínica en menos de 2 minutos.',
+    text: 'Regístrate con el nombre de tu consultorio o clínica en menos de 2 minutos.',
   },
   {
     title: 'Configura tu equipo',

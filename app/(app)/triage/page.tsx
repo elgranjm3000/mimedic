@@ -52,7 +52,7 @@ export default function TriagePage() {
     e.preventDefault();
     const patient = patients.find((p) => p.id === patientId);
     if (!patient) {
-      toast.error('Seleccioná el paciente');
+      toast.error('Selecciona el paciente');
       return;
     }
     setSaving(true);

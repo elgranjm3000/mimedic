@@ -133,7 +133,7 @@ export function LoginForm() {
                 {lang === 'es' ? '¿No tenés cuenta? ' : "Don't have an account? "}
               </span>
               <Link href="/registrarse" className="font-semibold text-teal-700 hover:text-teal-800">
-                {lang === 'es' ? 'Probá gratis 7 días' : 'Try free for 7 days'}
+                {lang === 'es' ? 'Prueba gratis 7 días' : 'Try free for 7 days'}
               </Link>
             </div>
           </form>

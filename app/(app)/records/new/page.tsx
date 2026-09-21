@@ -75,7 +75,7 @@ export default function NewRecordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!patientId) {
-      toast.error('Seleccioná el paciente');
+      toast.error('Selecciona el paciente');
       return;
     }
     const patient = patients.find((p) => p.id === patientId);

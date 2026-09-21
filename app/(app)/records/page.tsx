@@ -146,11 +146,11 @@ export default function RecordsPage() {
           <CardContent className="p-12 text-center">
             <FileText className="h-16 w-16 mx-auto text-gray-300 mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              {patientId ? 'Sin consultas registradas' : 'Seleccioná un paciente'}
+              {patientId ? 'Sin consultas registradas' : 'Selecciona un paciente'}
             </h3>
             <p className="text-gray-600 mb-6">
               {patientId
-                ? 'Registrá la primera consulta para comenzar su historia clínica.'
+                ? 'Registra la primera consulta para comenzar su historia clínica.'
                 : 'O consultá el historial completo de todas las consultas.'}
             </p>
             <Link href={`/records/new${patientId ? `?patient=${patientId}` : ''}`}>
