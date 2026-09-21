@@ -340,8 +340,8 @@ export function LandingPage() {
             <span className="font-semibold text-gray-900">MediControl</span>
           </div>
           <p>© {new Date().getFullYear()} MediControl · Gestión médica en la nube</p>
-          <a href="mailto:ventas@medicontrol.com" className="hover:text-teal-600 transition-colors">
-            ventas@medicontrol.com
+          <a href={`mailto:${process.env.NEXT_PUBLIC_SALES_EMAIL ?? 'elgranjm3000@gmail.com'}`} className="hover:text-teal-600 transition-colors">
+            {process.env.NEXT_PUBLIC_SALES_EMAIL ?? 'elgranjm3000@gmail.com'}
           </a>
         </div>
       </footer>

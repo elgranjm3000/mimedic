@@ -45,7 +45,7 @@ export function TrialGate({ children }: { children: ReactNode }) {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button asChild className="min-h-[44px]">
               <a
-                href={`mailto:ventas@medicontrol.com?subject=${encodeURIComponent('Solicitud de licencia — ' + (user.organizationName ?? ''))}`}
+                href={`mailto:${process.env.NEXT_PUBLIC_SALES_EMAIL ?? 'elgranjm3000@gmail.com'}?subject=${encodeURIComponent('Solicitud de licencia — ' + (user.organizationName ?? ''))}`}
               >
                 Solicitar licencia
               </a>
@@ -72,7 +72,7 @@ export function TrialGate({ children }: { children: ReactNode }) {
             ? 'Tu prueba gratuita termina mañana.'
             : `Te quedan ${left} días de prueba gratuita.`}
           <a
-            href={`mailto:ventas@medicontrol.com?subject=${encodeURIComponent('Solicitud de licencia — ' + (user.organizationName ?? ''))}`}
+            href={`mailto:${process.env.NEXT_PUBLIC_SALES_EMAIL ?? 'elgranjm3000@gmail.com'}?subject=${encodeURIComponent('Solicitud de licencia — ' + (user.organizationName ?? ''))}`}
             className="underline font-semibold"
           >
             Solicitar licencia
