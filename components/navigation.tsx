@@ -65,13 +65,13 @@ const navItems = [
     href: '/calendar',
     label: 'nav.calendar',
     icon: Calendar,
-    roles: ['admin', 'doctor', 'nurse', 'receptionist'],
+    roles: ['admin'],
   },
   {
     href: '/triage',
     label: 'nav.triage',
     icon: Activity,
-    roles: ['admin', 'doctor', 'nurse', 'receptionist'],
+    roles: ['admin', 'nurse', 'receptionist'],
   },
   {
     href: '/inventory',
